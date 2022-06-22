@@ -19,7 +19,7 @@ The main types are:
   either a keymap or anything else.  As a special case, a =nil= value signifies
   to unbind the key.
 
-Goals:
+** Goals
 
 - Support prefix keys to other keymaps.  For instance, if you prefix my-mode-map
   with =C-c=, then all bindings for my-mode will be accessible after pressing =C-c=.
@@ -42,7 +42,7 @@ Goals:
   This is convenient to catch typos, for instance when binding ='FOO= instead of
   =#'FOO=.
 
-Non-goals:
+** Non-goals
 
 - Customizable modifiers: the input system must decide how to map =meta=,
   =control=, etc.
@@ -52,3 +52,8 @@ Non-goals:
 - Provide a self-insert function: the caller must handle it.
 - Global or local bindings: it's up to the calling application to manage the
   locality of their keymaps.
+
+** History
+
+NKeymaps was originally developed for keymap management in [[https://nyxt.atlas.engineer][Nyxt]], so the "N"
+may stand for it, or "New", or whatever poetic meaning you may find behind it!
