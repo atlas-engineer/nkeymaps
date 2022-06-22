@@ -1,7 +1,7 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(in-package :keymap/scheme)
+(in-package :nkeymaps/scheme)
 
 (defvar cua (make-scheme-name "cua"))
 (defvar emacs (make-scheme-name "emacs" cua))

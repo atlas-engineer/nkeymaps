@@ -1,7 +1,7 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(in-package :keymap)
+(in-package :nkeymaps)
 
 ;; trivial-types:proper-list doesn't check its element type.
 

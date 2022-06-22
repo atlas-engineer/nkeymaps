@@ -1,7 +1,7 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(in-package :keymap)
+(in-package :nkeymaps)
 
 (define-condition bad-modifier (error)
   ((message :initarg :message :accessor message :initform ""))

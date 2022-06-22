@@ -1,7 +1,7 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(in-package :keymap)
+(in-package :nkeymaps)
 
 ;; TODO: Add timeout support, e.g. "jk" in less than 0.1s could be ESC in VI-style.
 
@@ -350,7 +350,7 @@ Parents are ordered by priority, the first parent has highest priority.")))
 ;; types that use `satisfies' for non-top-level symbols.
 ;; We can verify this with:
 ;;
-;;   (compile 'foo (lambda () (keymap::define-key keymap "C-x C-f" 'open-file)))
+;;   (compile 'foo (lambda () (nkeymaps::define-key keymap "C-x C-f" 'open-file)))
 (defmacro define-key (keymap keyspecs bound-value &rest more-keyspecs-value-pairs)
   "Bind KEYS to BOUND-VALUE in KEYMAP.
 Return KEYMAP.
@@ -526,7 +526,7 @@ Then keys translation are looked up one after the other.
 The same is done for the successive keymaps if KEYMAP-OR-KEYMAPS is a list of
 keymaps."
   (let* ((keys (if (stringp keys-or-keyspecs)
-                   (keymap::keyspecs->keys keys-or-keyspecs)
+                   (nkeymaps::keyspecs->keys keys-or-keyspecs)
                    keys-or-keyspecs))
          (matching-keymap nil)
          (matching-key nil)

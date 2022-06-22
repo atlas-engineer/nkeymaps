@@ -1,9 +1,7 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(in-package :cl-user)
-
-(uiop:define-package keymap
+(uiop:define-package nkeymaps
   (:use #:common-lisp)
   (:import-from #:fset)
   (:import-from #:str)
@@ -82,12 +80,10 @@ Some globals can be tweaked to customize the library to your needs:
 - `*print-shortcuts*': Print modifiers using their short form instead of the
   full name, e.g. \"C\" instead of \"control\".
 - `*default-bound-type*': The allowed type for bound values; default to T (everything)."))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :keymap))
 
-(uiop:define-package keymap/scheme
+(uiop:define-package nkeymaps/scheme
   (:use #:common-lisp)
-  (:import-from #:keymap #:make-scheme-name)
+  (:import-from #:nkeymaps #:make-scheme-name)
   (:export
    #:cua
    #:emacs
@@ -95,3 +91,7 @@ Some globals can be tweaked to customize the library to your needs:
    #:vi-insert)
   (:documentation "Package holding the list of well-known scheme names.
 We use a dedicated package so that scheme names can easily be listed and completed."))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps)
+  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps/scheme))
