@@ -1,4 +1,5 @@
-General-purpose keymap management.
+#+TITLE: NKeymaps
+#+SUBTITLE: General-purpose keymap management
 
 This keymap library is inspired by [[https://savannah.nongnu.org/projects/emacsy][Emacsy]] (=keymap.scm=) which is inspired by
 Emacs.
