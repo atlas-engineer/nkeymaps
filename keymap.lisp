@@ -350,7 +350,7 @@ Parents are ordered by priority, the first parent has highest priority.")))
 ;; types that use `satisfies' for non-top-level symbols.
 ;; We can verify this with:
 ;;
-;;   (compile 'foo (lambda () (nkeymaps::define-key keymap "C-x C-f" 'open-file)))
+;;   (compile nil (lambda () (nkeymaps::define-key keymap "C-x C-f" 'open-file)))
 (defmacro define-key (keymap keyspecs bound-value &rest more-keyspecs-value-pairs)
   "Bind KEYS to BOUND-VALUE in KEYMAP.
 Return KEYMAP.

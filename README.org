@@ -31,9 +31,9 @@ The main types are:
 - Support keycode.
 - Validate keyspec at compile time.
 - ~define-key~ can set multiple bindings in a single call.
-- Support multiple scheme to make it easy to switch between, say, Emacs-style
+- Support multiple keyschemes to make it easy to switch between, say, Emacs-style
   and VI-style bindings.  This orthogonality to keymaps composes better than
-  having multiple keymaps: changing scheme applies to the entire program, which
+  having multiple keymaps: changing keyscheme applies to the entire program, which
   is easier than looping through all keymaps to change them.
 - Translate keyspecs as a fallback.  For instance if =shift-a= is unbound, check
   =A=.

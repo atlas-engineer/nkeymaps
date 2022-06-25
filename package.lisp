@@ -1,6 +1,7 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
+;; TODO: Reexport nkeymaps/keyscheme.
 (uiop:define-package nkeymaps
   (:use #:common-lisp)
   (:import-from #:fset)
@@ -58,14 +59,14 @@
    #:empty-modifiers
 
    ;; scheme
-   #:scheme-name
-   #:make-scheme-name
-   #:scheme-name-p
-   #:scheme
-   #:scheme-p
-   #:define-scheme
+   #:keyscheme
+   #:make-keyscheme
+   #:keyscheme-p
+   #:keyscheme-map
+   #:keyscheme-map-p
+   #:define-keyscheme-map
    #:get-keymap
-   #:make-scheme)
+   #:make-keyscheme-map)
   (:documentation "
 The workflow goes as follows:
 - Make a keymap with `make-keymap'.
@@ -81,17 +82,17 @@ Some globals can be tweaked to customize the library to your needs:
   full name, e.g. \"C\" instead of \"control\".
 - `*default-bound-type*': The allowed type for bound values; default to T (everything)."))
 
-(uiop:define-package nkeymaps/scheme
+(uiop:define-package nkeymaps/keyscheme
   (:use #:common-lisp)
-  (:import-from #:nkeymaps #:make-scheme-name)
+  (:import-from #:nkeymaps #:make-keyscheme)
   (:export
    #:cua
    #:emacs
    #:vi-normal
    #:vi-insert)
-  (:documentation "Package holding the list of well-known scheme names.
-We use a dedicated package so that scheme names can easily be listed and completed."))
+  (:documentation "Package holding the list of well-known keyschemes.
+We use a dedicated package so that keyschemes can easily be listed and completed."))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps)
-  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps/scheme))
+  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps/keyscheme))
