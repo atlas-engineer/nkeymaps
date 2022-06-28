@@ -1,13 +1,10 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-;; TODO: Reexport nkeymaps/keyscheme.
-(uiop:define-package nkeymaps
+(uiop:define-package nkeymaps/core
   (:use #:common-lisp
         #:nkeymaps/types
         #:nkeymaps/conditions)
-  (:reexport #:nkeymaps/types
-             #:nkeymaps/conditions)
   (:import-from #:fset)
   (:export
    #:modifier=
@@ -63,6 +60,26 @@
    #:define-keyscheme-map
    #:get-keymap
    #:make-keyscheme-map)
+  (:documentation "See the `nkeymaps' package documentation."))
+
+(uiop:define-package nkeymaps/keyscheme
+  (:use #:common-lisp)
+  (:import-from #:nkeymaps/core #:make-keyscheme)
+  (:export
+   #:cua
+   #:emacs
+   #:vi-normal
+   #:vi-insert)
+  (:documentation "Package holding the list of well-known keyschemes.
+We use a dedicated package so that keyschemes can easily be listed and completed."))
+
+(uiop:define-package nkeymaps
+  (:use #:common-lisp)
+  (:use-reexport
+   #:nkeymaps/types
+   #:nkeymaps/conditions
+   #:nkeymaps/core
+   #:nkeymaps/keyscheme)
   (:documentation "
 The workflow goes as follows:
 - Make a keymap with `make-keymap'.
@@ -78,17 +95,6 @@ Some globals can be tweaked to customize the library to your needs:
   full name, e.g. \"C\" instead of \"control\".
 - `*default-bound-type*': The allowed type for bound values; default to T (everything)."))
 
-(uiop:define-package nkeymaps/keyscheme
-  (:use #:common-lisp)
-  (:import-from #:nkeymaps #:make-keyscheme)
-  (:export
-   #:cua
-   #:emacs
-   #:vi-normal
-   #:vi-insert)
-  (:documentation "Package holding the list of well-known keyschemes.
-We use a dedicated package so that keyschemes can easily be listed and completed."))
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps)
-  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps/keyscheme))
+  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps/core)
+  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps))
