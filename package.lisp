@@ -91,12 +91,10 @@ The workflow goes as follows:
 
 Some globals can be tweaked to customize the library to your needs:
 
-- `*modifier-list*': List of known keyboard modifiers like `+control+'.
 - `*translator*': The function to infer the right binding when
   the exact binding hits nothing.
 - `*print-shortcuts*': Print modifiers using their short form instead of the
-  full name, e.g. \"C\" instead of \"control\".
-- `*default-bound-type*': The allowed type for bound values; default to T (everything)."))
+  full name, e.g. \"C\" instead of \"control\"."))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps/core)
