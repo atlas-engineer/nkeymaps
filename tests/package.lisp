@@ -4,5 +4,5 @@
 (in-package :cl-user)
 
 (uiop:define-package nkeymaps/tests
-  (:use #:common-lisp)
+  (:use #:common-lisp #:lisp-unit2)
   (:import-from #:nkeymaps))

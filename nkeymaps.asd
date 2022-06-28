@@ -18,7 +18,12 @@
   :in-order-to ((test-op (test-op "nkeymaps/tests"))))
 
 (defsystem "nkeymaps/tests"
-  :depends-on (alexandria fset nkeymaps prove)
-  :components ((:file "test-package"))
+  :depends-on (alexandria fset nkeymaps lisp-unit2)
+  :pathname "tests/"
+  :serial t
+  :components ((:file "package")
+               (:file "tests")
+               (:file "keyscheme-tests"))
   :perform (test-op (op c)
-                    (symbol-call :prove :run (system-relative-pathname c "tests/"))))
+                    (symbol-call :lisp-unit2 :run-tests :package :nkeymaps/tests
+                                 :run-contexts (find-symbol "WITH-SUMMARY-CONTEXT" :lisp-unit2))))
