@@ -7,6 +7,7 @@
         #:nkeymaps/conditions)
   (:import-from #:fset)
   (:export
+   #:define-modifier
    #:modifier=
    #:+control+
    #:+meta+
@@ -14,7 +15,7 @@
    #:+super+
    #:+hyper+
 
-   #:*modifier-list*
+
 
    #:key
    #:make-key
@@ -33,6 +34,7 @@
    #:parents
    #:name
    #:bound-type
+   #:modifiers
 
    #:translate-remove-shift-toggle-case
    #:translate-remove-shift

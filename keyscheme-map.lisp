@@ -23,7 +23,13 @@ keyschemes.  See `define-keyscheme-map'.")
                "Type of the bound-value.
 The type is enforced in `define-keyscheme-map' at macro-expansion time.
 Type should allow `keymap's, so it should probably be in the form
-\(or keymap NON-KEYMAP-BOUND-TYPE).")))
+\(or keymap NON-KEYMAP-BOUND-TYPE).")
+   (modifiers :accessor modifiers
+              :initarg :modifiers
+              :initform (fset:convert 'fset:set  *modifier-list*)
+              :type fset:wb-set
+              :documentation "
+Accepted modifiers for this `keyscheme'.")))
 
 (defmethod print-object ((object keyscheme) stream)
   (print-unreadable-object (object stream :type t :identity t)
@@ -82,6 +88,7 @@ See `define-keyscheme-map' for the user-facing function."
       (loop :for (keyscheme nil . nil) :on name+bindings-pairs :by #'cddr
             :do (setf (gethash keyscheme keyscheme-map)
                       (let ((new-keymap (make-keymap (format nil "~a-~a-map" name-prefix (name keyscheme)))))
+                        (setf (modifiers new-keymap) (modifiers keyscheme))
                         (setf (bound-type new-keymap) (bound-type keyscheme))
                         new-keymap))))
     ;; Set parents now that all keymaps exist.
@@ -157,11 +164,14 @@ The keyscheme-map keymaps are named \"my-mode-cua-map\" and \"my-mode-emacs-map\
       (check-plist keyscheme-specifier :name-prefix :import))
     (loop :for (keyscheme quoted-bindings . nil) :on keyscheme+bindings-pairs :by #'cddr
           :for bindings = (rest quoted-bindings)
-          :do (check-type (symbol-value keyscheme) keyscheme)
+          :do (check-type keyscheme symbol)
+          :when (boundp keyscheme)
+            :do (check-type (symbol-value keyscheme) keyscheme)
           :do (check-type bindings list)
           :do (loop :for (keyspecs bound-value . nil) :on bindings :by #'cddr
-                    :do (check-type keyspecs (or keyspecs-type list))
-                    :when (quoted-symbol-p bound-value)
+                    ;; :when (boundp keyscheme)
+                      ;; :do (check-type keyspecs (or keyspecs-type list))
+                    :when (and (boundp keyscheme) (quoted-symbol-p bound-value))
                       :do (assert (typep (second bound-value) (bound-type (symbol-value keyscheme))) (bound-value)
                                   'type-error :datum (second bound-value) :expected-type (bound-type (symbol-value keyscheme)))))
     `(progn

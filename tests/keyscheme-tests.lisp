@@ -99,6 +99,26 @@
       (assert-eql 'hit-me
                   (nkeymaps:lookup-key "C-c" keymaps)))))
 
+(define-test custom-modifiers ()
+  "Define scheme with custom modifiers."
+  (let* ((+custom+ (make-instance 'nkeymaps:keyscheme
+                                  :name "custom"
+                                  :modifiers (fset:set
+                                              nkeymaps:+control+
+                                              (nkeymaps:define-modifier :string "duper" :shortcut "D"))))
+         (keyscheme-map (nkeymaps:define-keyscheme-map "test"
+                          +custom+ (list
+                                    "D-c" 'hit-me
+                                    "C-c" 'hit-me-again))))
+
+    (let ((keymap (nkeymaps:get-keymap +custom+ keyscheme-map)))
+      (assert-eql 'hit-me
+                  (nkeymaps:lookup-key "D-c" keymap))
+      (assert-eql 'hit-me-again
+                  (nkeymaps:lookup-key "C-c" keymap))
+      (assert-error 'nkeymaps/conditions:bad-modifier
+                    (nkeymaps:lookup-key "M-c" keymap)))))
+
 ;; (prove:subtest "Make scheme with type errors" ; TODO: How do we test macro-expansion-time error?
 ;;   (prove:is-error (nkeymaps:define-keyscheme-map
 ;;                       nkeymaps:cua (list "C-" 'copy))

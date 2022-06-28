@@ -33,17 +33,27 @@
 \"M\") is the same as (\"M\" \"C\")."
   (fset:compare-lexicographically (modifier-string x) (modifier-string y)))
 
-(defvar +control+ (make-modifier :string "control" :shortcut "C"))
-(defvar +meta+ (make-modifier :string "meta" :shortcut "M"))
-(defvar +shift+ (make-modifier :string "shift" :shortcut "s"))
-(defvar +super+ (make-modifier :string "super" :shortcut "S"))
-(defvar +hyper+ (make-modifier :string "hyper" :shortcut "H"))
-
-(defparameter *modifier-list*
-  (list +control+ +meta+ +shift+ +super+ +hyper+)
+(defparameter *modifier-list* (list)
   "List of known modifiers.
 `make-key' and `define-key' raise an error when setting a modifier that is not
 in this list.")
+
+(defun define-modifier (&rest args &key string shortcut)
+  "Return a new modifier.
+It is registered globally and can be used from any new keymap, unless the keymap
+filters out the modifier in its `modifiers' slot."
+  (declare (ignore string shortcut))
+  (let ((result (apply #'make-modifier args)))
+    (setf *modifier-list* (delete result *modifier-list*
+                                  :test #'modifier=))
+    (push result *modifier-list*)
+    result))
+
+(defparameter +control+ (define-modifier :string "control" :shortcut "C"))
+(defparameter +meta+ (define-modifier :string "meta" :shortcut "M"))
+(defparameter +shift+ (define-modifier :string "shift" :shortcut "s"))
+(defparameter +super+ (define-modifier :string "super" :shortcut "S"))
+(defparameter +hyper+ (define-modifier :string "hyper" :shortcut "H"))
 
 (deftype key-status-type ()
   `(or (eql :pressed) (eql :released)))
@@ -311,7 +321,13 @@ Type should allow `keymap's, so it should probably be in the form
             :initform nil
             :type (list-of keymap)
             :documentation "List of parent keymaps.
-Parents are ordered by priority, the first parent has highest priority.")))
+Parents are ordered by priority, the first parent has highest priority.")
+   (modifiers :accessor modifiers
+              :initarg :modifiers
+              :initform (fset:convert 'fset:set  *modifier-list*)
+              :type fset:wb-set
+              :documentation "
+Accepted modifiers for this `keymap'.")))
 
 (defmethod print-object ((keymap keymap) stream)
   (print-unreadable-object (keymap stream :type t :identity t)
@@ -412,31 +428,45 @@ See `define-key' for the user-facing function."
                 (t (keyspecs->keys keyspecs)))))
     (bind-key keymap keys bound-value)))
 
+(defun legal-modifiers-p (key keymap)
+  "Whether KEY's modifiers are allowed in KEYMAP."
+  (fset:empty? (fset:set-difference (key-modifiers key)
+                                    (modifiers keymap))))
+
 (declaim (ftype (function (keymap (list-of key) (or keymap t)) (values keymap &optional))
                 bind-key))
 (defun bind-key (keymap keys bound-value)
   "Recursively bind the KEYS to keymaps starting from KEYMAP.
 The last key is bound to BOUND-VALUE.
 If BOUND-VALUE is nil, the key is unbound.
+If KEYS has modifiers that are not allowed in KEYMAP, do nothing.
+
 Return KEYMAP."
-  (if (= (length keys) 1)
-      (progn
-        (when (fset:@ (entries keymap) (first keys))
-          ;; TODO: Notify caller properly?
-          (warn 'override-existing-binding
-                :existing-binding-value (fset:@ (entries keymap) (first keys))))
-        (if bound-value
-            (setf (fset:@ (entries keymap) (first keys)) bound-value)
-            (setf (entries keymap) (fset:less (entries keymap) (first keys)))))
-      (let ((submap (fset:@ (entries keymap) (first keys))))
-        (when (and (not (keymap-p submap))
-                   bound-value)
-          (setf submap (make-keymap "anonymous"))
-          (setf (fset:@ (entries keymap) (first keys)) submap))
-        (bind-key submap (rest keys) bound-value)
-        (unless bound-value
-          (when (fset:equal? (fset:empty-map) (entries submap))
-            (setf (entries keymap) (fset:less (entries keymap) (first keys)))))))
+  (cond
+    ((not (legal-modifiers-p (first keys) keymap))
+     (error 'bad-modifier
+            :message (format nil "Keymap ~a only accepts modifiers ~a, got ~a"
+                             keymap
+                             (modifiers keymap)
+                             (key-modifiers (first keys)))))
+    ((= (length keys) 1)
+     (when (fset:@ (entries keymap) (first keys))
+       ;; TODO: Notify caller properly?
+       (warn 'override-existing-binding
+             :existing-binding-value (fset:@ (entries keymap) (first keys))))
+     (if bound-value
+         (setf (fset:@ (entries keymap) (first keys)) bound-value)
+         (setf (entries keymap) (fset:less (entries keymap) (first keys)))))
+    (t
+     (let ((submap (fset:@ (entries keymap) (first keys))))
+       (when (and (not (keymap-p submap))
+                  bound-value)
+         (setf submap (make-keymap "anonymous"))
+         (setf (fset:@ (entries keymap) (first keys)) submap))
+       (bind-key submap (rest keys) bound-value)
+       (unless bound-value
+         (when (fset:equal? (fset:empty-map) (entries submap))
+           (setf (entries keymap) (fset:less (entries keymap) (first keys))))))))
   keymap)
 
 (declaim (ftype (function (keymap
@@ -449,20 +479,26 @@ Return KEYMAP."
 Return nil when KEYS is not found in KEYMAP.
 VISITED is used to detect cycles."
   (when keys
-    (let ((hit (fset:@ (entries keymap) (first keys))))
-      (when hit
-        (cond
-          ((and (keymap-p hit)
-                (rest keys))
-           (lookup-key* hit (rest keys) visited))
-          ((and (not (keymap-p hit))
-                (rest keys))
-           ;; Found a binding instead of a prefix keymap, skip it since it
-           ;; should be shadowed.
-           ;; Example: we loop up "C-x C-f" which is meant to be bound to
-           ;; 'open-file, but "C-x" is bound to 'cut in a parent keymap.
-           nil)
-          (t hit))))))
+    (if (legal-modifiers-p (first keys) keymap)
+        (let ((hit (fset:@ (entries keymap) (first keys))))
+          (when hit
+            (cond
+              ((and (keymap-p hit)
+                    (rest keys))
+               (lookup-key* hit (rest keys) visited))
+              ((and (not (keymap-p hit))
+                    (rest keys))
+               ;; Found a binding instead of a prefix keymap, skip it since it
+               ;; should be shadowed.
+               ;; Example: we loop up "C-x C-f" which is meant to be bound to
+               ;; 'open-file, but "C-x" is bound to 'cut in a parent keymap.
+               nil)
+              (t hit))))
+        (error 'bad-modifier
+               :message (format nil "Keymap ~a only accepts modifiers ~a, got ~a"
+                                keymap
+                                (modifiers keymap)
+                                (key-modifiers (first keys)))))))
 
 (defun keymap-tree->list (keymaps visited)
   "Flatten the KEYMAPS into a list.
