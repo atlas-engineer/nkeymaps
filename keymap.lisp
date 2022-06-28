@@ -82,7 +82,7 @@ specify a key-code binding."
             (error 'bad-modifier
                    :message (format nil "Unknown modifier ~a" string-or-modifier))))))
 
-(declaim (ftype (function ((or list-of-strings
+(declaim (ftype (function ((or (list-of string)
                                fset:wb-set))
                           fset:wb-set)
                 modspecs->modifiers))
@@ -178,7 +178,7 @@ Note that '-' or '#' as a last character is supported, e.g. 'control--' and
         (setf value code-or-value))
     (make-key :code code :value value :modifiers modifiers)))
 
-(declaim (ftype (function (string) list-of-keys) keyspecs->keys))
+(declaim (ftype (function (string) (list-of key)) keyspecs->keys))
 (defun keyspecs->keys (spec)
   "Parse SPEC and return corresponding list of keys."
   ;; TODO: Return nil if SPEC is invalid?
@@ -310,7 +310,7 @@ Type should allow `keymap's, so it should probably be in the form
    (parents :accessor parents
             :initarg :parents
             :initform nil
-            :type list-of-keymaps
+            :type (list-of keymap)
             :documentation "List of parent keymaps.
 Parents are ordered by priority, the first parent has highest priority.")))
 
@@ -413,7 +413,7 @@ See `define-key' for the user-facing function."
                 (t (keyspecs->keys keyspecs)))))
     (bind-key keymap keys bound-value)))
 
-(declaim (ftype (function (keymap list-of-keys (or keymap t)) (values keymap &optional))
+(declaim (ftype (function (keymap (list-of key) (or keymap t)) (values keymap &optional))
                 bind-key))
 (defun bind-key (keymap keys bound-value)
   "Recursively bind the KEYS to keymaps starting from KEYMAP.
@@ -440,8 +440,8 @@ Return KEYMAP."
   keymap)
 
 (declaim (ftype (function (keymap
-                           list-of-keys
-                           list-of-keymaps)
+                           (list-of key)
+                           (list-of keymap))
                           (or keymap t))
                 lookup-keys-in-keymap))
 (defun lookup-keys-in-keymap (keymap keys visited)
@@ -484,9 +484,9 @@ Return (keymap1 keymap2 k1a k1b k2a k1ap)."
                         (alex:mappend #'parents keymaps))
              (append keymaps visited)))))
 
-(declaim (ftype (function ((or keymap list-of-keymaps)
-                           list-of-keys
-                           list-of-keymaps)
+(declaim (ftype (function ((or keymap (list-of keymap))
+                           (list-of key)
+                           (list-of keymap))
                           (values (or keymap t) (or keymap null)))
                 lookup-key*))
 (defun lookup-key* (keymap-or-keymaps keys visited)
@@ -508,9 +508,9 @@ As a second value, return the matching keymap."
                 (keymap-tree->list (uiop:ensure-list keymap-or-keymaps) '()))))
     (values result matching-keymap)))
 
-(declaim (ftype (function ((or list-of-keys keyspecs-type)
-                           (or keymap list-of-keymaps))
-                          (values (or keymap t) (or keymap null) list-of-keys))
+(declaim (ftype (function ((or (list-of key) keyspecs-type)
+                           (or keymap (list-of keymap)))
+                          (values (or keymap t) (or keymap null) (list-of key)))
                 lookup-key))
 (defun lookup-key (keys-or-keyspecs keymap-or-keymaps)
   ;; We name this user-facing function using the singular form to be consistent
@@ -563,14 +563,14 @@ For now the status is not encoded in the keyspec, this may change in the future.
          (str:concat (if (str:empty? modifiers) "" (str:concat modifiers "-"))
                      value))))
 
-(declaim (ftype (function (list-of-keys) keyspecs-type) keys->keyspecs))
+(declaim (ftype (function ((list-of key)) keyspecs-type) keys->keyspecs))
 (defun keys->keyspecs (keys)
   "Return the keyspecs (a list of `keyspec') for KEYS.
 See `key->keyspec' for the details."
   (the (values keyspecs-type &optional)
        (str:join " " (mapcar #'key->keyspec keys))))
 
-(declaim (ftype (function (keymap &optional list-of-keymaps) fset:map) keymap->map*))
+(declaim (ftype (function (keymap &optional (list-of keymap)) fset:map) keymap->map*))
 (defun keymap->map* (keymap &optional visited)
   "Return a map of (KEYSPEC SYM) from KEYMAP."
   (flet ((fold-keymap (result key sym)
@@ -651,7 +651,7 @@ highest precedence."
            (setf (entries merge) (fset:map-union (entries keymap2) (entries keymap1)))
            (apply #'compose merge (rest (rest keymaps)))))))))
 
-(declaim (ftype (function (t keymap &key (:test function)) list-of-strings) binding-keys*))
+(declaim (ftype (function (t keymap &key (:test function)) (list-of string)) binding-keys*))
 (defun binding-keys* (binding keymap &key (test #'eql))
   "Return a the list of `keyspec's bound to BINDING in KEYMAP.
 The list is sorted alphabetically to ensure reproducible results.
@@ -672,7 +672,7 @@ Comparison against BINDING is done with TEST."
                result)))
     (sort (mapcar #'keys->keyspecs (scan-keymap keymap '())) #'string<)))
 
-(declaim (ftype (function (t (or keymap list-of-keymaps) &key (:test function))
+(declaim (ftype (function (t (or keymap (list-of keymap)) &key (:test function))
                           (values list list))
                 binding-keys))
 (defun binding-keys (bound-value keymap-or-keymaps &key (test #'eql))

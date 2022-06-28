@@ -13,7 +13,7 @@
    (parents :initarg :parents
             :accessor parents
             :initform '()
-            :type list-of-scheme-names
+            :type (list-of keyscheme)
             :documentation "The list of parents.  When a scheme is defined, the
 keymap parents are automatically set to the keymaps corresponding to the given
 keyschemes.  See `define-keyscheme-map'.")

@@ -9,8 +9,8 @@
   :license "BSD 3-Clause"
   :depends-on (alexandria fset str trivial-package-local-nicknames)
   :serial t
-  :components ((:file "package")
-               (:file "types")
+  :components ((:file "types")
+               (:file "package")
                (:file "conditions")
                (:file "keymap")
                (:file "scheme")
