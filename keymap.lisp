@@ -164,7 +164,7 @@ Note that '-' or '#' as a last character is supported, e.g. 'control--' and
          (value "")
          (code-or-value (subseq string (1+ last-nonval-hyphen)))
          (rest (subseq string 0 (1+ last-nonval-hyphen)))
-         (modifiers (butlast (str:split "-" rest))))
+         (modifiers (butlast (uiop:split-string rest :separator "-"))))
     (when (find "" modifiers :test #'string=)
       (error 'empty-modifiers))
     (when (and (<= 2 (length code-or-value))
@@ -182,7 +182,7 @@ Note that '-' or '#' as a last character is supported, e.g. 'control--' and
 (defun keyspecs->keys (spec)
   "Parse SPEC and return corresponding list of keys."
   ;; TODO: Return nil if SPEC is invalid?
-  (let* ((result (str:split " " spec :omit-nulls t)))
+  (let* ((result (delete "" (uiop:split-string spec) :test #'string=)))
     (mapcar #'keyspec->key result)))
 
 (declaim (ftype (function (string) string) toggle-case))
@@ -546,6 +546,19 @@ keymaps."
 (defparameter *print-shortcut* t
   "Whether to print the short form of the modifiers.")
 
+(defun string-join (strings separator &key end)
+  "Adapted from `serapeum:string-join'."
+  (with-output-to-string (s)
+    (if strings
+        (progn
+          (write-string (string (first strings)) s)
+          (dolist (string (cdr strings))
+            (write-string (string separator) s)
+            (write-string (string string) s))
+          (when end
+            (write-string (string separator) s)))
+        (make-string 0))))
+
 (declaim (ftype (function (key) keyspecs-type) key->keyspec))
 (defun key->keyspec (key)
   "Return the keyspec of KEY.
@@ -554,21 +567,21 @@ For now the status is not encoded in the keyspec, this may change in the future.
   (let ((value (if (zerop (key-code key))
                    (key-value key)
                    (format nil "#~a" (key-code key))))
-        (modifiers (fset:reduce (lambda (&rest mods) (str:join "-" mods))
+        (modifiers (fset:reduce (lambda (&rest mods) (string-join mods "-"))
                                 (key-modifiers key)
                                 :key (if *print-shortcut*
                                          #'modifier-shortcut
                                          #'modifier-string))))
     (the (values keyspecs-type &optional)
-         (str:concat (if (str:empty? modifiers) "" (str:concat modifiers "-"))
-                     value))))
+         (uiop:strcat (if (str:empty? modifiers) "" (uiop:strcat modifiers "-"))
+                      value))))
 
 (declaim (ftype (function ((list-of key)) keyspecs-type) keys->keyspecs))
 (defun keys->keyspecs (keys)
   "Return the keyspecs (a list of `keyspec') for KEYS.
 See `key->keyspec' for the details."
   (the (values keyspecs-type &optional)
-       (str:join " " (mapcar #'key->keyspec keys))))
+       (string-join (mapcar #'key->keyspec keys) " ")))
 
 (declaim (ftype (function (keymap &optional (list-of keymap)) fset:map) keymap->map*))
 (defun keymap->map* (keymap &optional visited)

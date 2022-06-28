@@ -5,7 +5,6 @@
 (uiop:define-package nkeymaps
   (:use #:common-lisp #:nkeymaps/types)
   (:import-from #:fset)
-  (:import-from #:str)
   (:export
    #:modifier=
    #:+control+
