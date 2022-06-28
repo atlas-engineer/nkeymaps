@@ -61,3 +61,23 @@ The main types are:
 
 NKeymaps was originally developed for keymap management in [[https://nyxt.atlas.engineer][Nyxt]], so the "N"
 may stand for it, or "New", or whatever poetic meaning you may find behind it!
+
+** Change log
+
+*** 1.0.0
+
+- Renamed =scheme-name= to =keyscheme= and =scheme= to =keyscheme-map=.
+  It's more consistent and intuitive.  The previous naming was really confusing.
+- All warnings have now their own conditions, see the =nkeymaps/conditions= package.
+- =define-keyscheme-map= has a different syntax, it's now
+  #+begin_src lisp
+    (define-keyscheme-map "NAME-PREFIX" (:import OPTIONAL-KEYSCHEME-MAP-TO-IMPORT)
+      KEYSCHEME BINDINGS...)
+  #+end_src
+- The predefined =keyscheme=s are now accessible from the =nkeymaps= package.
+- New =default= =keyscheme= which is the new parent of other keyschemes
+  (including =cua=), instead of =cua=.
+- =*modifier-list*= is no longer exported.  Instead, both =keyscheme= and
+  =keymap= have a =modifiers= slot for the modifiers they accept.
+- Switched testing framework from =Prove= to =Lisp-Unit2=.
+- Removed the =cl-str= dependency.
