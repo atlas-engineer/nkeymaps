@@ -479,7 +479,7 @@ Return (keymap1 keymap2 k1a k1b k2a k1ap)."
             (keymap-tree->list
              (delete-if (lambda (keymap)
                           (when (find keymap visited)
-                            (warn "Cycle detected in keymap ~a" keymap)
+                            (warn 'cycle :keymap keymap)
                             t))
                         (alex:mappend #'parents keymaps))
              (append keymaps visited)))))
@@ -497,7 +497,7 @@ As a second value, return the matching keymap."
          (result
           (some (lambda (keymap)
                   (if (find keymap visited)
-                      (warn "Cycle detected in keymap ~a" keymap)
+                      (warn 'cycle :keymap keymap)
                       (let ((hit (lookup-keys-in-keymap
                                   keymap
                                   keys
@@ -578,7 +578,7 @@ See `key->keyspec' for the details."
              (if (keymap-p sym)
                  (cond
                    ((find sym visited)
-                    (warn "Cycle detected in keymap ~a" keymap)
+                    (warn 'cycle :keymap keymap)
                     result)
                    (t
                     (fset:map-union result
@@ -611,7 +611,7 @@ Keymaps are ordered by precedence, highest precedence comes first."
                ((null keymap)
                 '())
                ((find keymap visited)
-                (warn "Cycle detected in parent keymap ~a" keymap)
+                (warn 'cycle  :keymap keymap)
                 '())
                (t
                 (cons keymap
@@ -665,7 +665,7 @@ Comparison against BINDING is done with TEST."
                    ((funcall test binding sym)
                     (push (list key) result))
                    ((and (keymap-p sym) (find sym visited))
-                    (warn "Cycle detected in keymap ~a" keymap))
+                    (warn 'cycle :keymap keymap))
                    ((keymap-p sym)
                     (dolist (hit (scan-keymap sym (cons keymap visited)))
                       (push (cons key hit) result)))))

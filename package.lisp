@@ -52,6 +52,7 @@
    #:compose
 
    ;; conditions
+   #:cycle
    #:bad-modifier
    #:make-key-required-arg
    #:empty-keyspec

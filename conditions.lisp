@@ -3,6 +3,14 @@
 
 (in-package :nkeymaps)
 
+(define-condition cycle (warning)
+  ((message :initarg :message :accessor message :initform "Cycle detect in keymap")
+   (keymap :initarg :keymap :accessor keymap :initform (alex:required-argument 'keymap)))
+  (:report (lambda (c stream)
+             (format stream "~a ~a" (message c) (keymap c))))
+  (:documentation "Warning raised when keymap has cycles.
+This is possible if a bound value is a keymap that occured before."))
+
 (define-condition bad-modifier (error)
   ((message :initarg :message :accessor message :initform ""))
   (:report (lambda (c stream)
