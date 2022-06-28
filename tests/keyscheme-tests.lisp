@@ -1,7 +1,6 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-;; TODO: Rename to keyscheme-tests.lisp.
 ;; TODO: Switch to a better testing framework.
 
 (in-package :nkeymaps/tests)
