@@ -559,7 +559,7 @@ Return NIL if no value is found.
 
 The successive keymaps from KEYMAP-OR-KEYMAPS (if a list) are looked up one
 after the other.
-If no binding is found, the direct parents are lookeup up in the same order.
+If no binding is found, the direct parents are looked up up in the same order.
 And so on if the binding is still not found."
   (let* ((keys (if (stringp keys-or-keyspecs)
                    (keyspecs->keys keys-or-keyspecs)
