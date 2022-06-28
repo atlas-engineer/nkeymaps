@@ -7,7 +7,7 @@
   :author "Atlas Engineer LLC"
   :homepage "https://github.com/atlas-engineer/nkeymaps"
   :license "BSD 3-Clause"
-  :depends-on (alexandria fset trivial-package-local-nicknames)
+  :depends-on (alexandria fset trivial-package-local-nicknames uiop)
   :serial t
   :components ((:file "types")
                (:file "conditions")
