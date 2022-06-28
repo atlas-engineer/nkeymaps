@@ -557,12 +557,12 @@ As a third value, return the possibly translated KEYS.
 
 Return NIL if no value is found.
 
-First keymap parents are looked up one after the other.
-Then keys translation are looked up one after the other.
-The same is done for the successive keymaps if KEYMAP-OR-KEYMAPS is a list of
-keymaps."
+The successive keymaps from KEYMAP-OR-KEYMAPS (if a list) are looked up one
+after the other.
+If no binding is found, the direct parents are lookeup up in the same order.
+And so on if the binding is still not found."
   (let* ((keys (if (stringp keys-or-keyspecs)
-                   (nkeymaps::keyspecs->keys keys-or-keyspecs)
+                   (keyspecs->keys keys-or-keyspecs)
                    keys-or-keyspecs))
          (matching-keymap nil)
          (matching-key nil)
