@@ -13,8 +13,8 @@
                (:file "package")
                (:file "conditions")
                (:file "keymap")
-               (:file "scheme")
-               (:file "scheme-names"))
+               (:file "keyscheme-map")
+               (:file "keyschemes"))
   :in-order-to ((test-op (test-op "nkeymaps/tests"))))
 
 (defsystem "nkeymaps/tests"
