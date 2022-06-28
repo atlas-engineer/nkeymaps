@@ -10,8 +10,8 @@
   :depends-on (alexandria fset trivial-package-local-nicknames)
   :serial t
   :components ((:file "types")
-               (:file "package")
                (:file "conditions")
+               (:file "package")
                (:file "keymap")
                (:file "keyscheme-map")
                (:file "keyschemes"))

@@ -99,7 +99,7 @@ specify a key-code binding."
                                   (no-dups-mods (delete-duplicates mods :test #'modifier=)))
                              (when (/= (length mods) (length no-dups-mods))
                                (warn 'duplicate-modifiers
-                                     :modifiers (list-difference mods no-dups-mods)))
+                                     :modifiers (mapcar #'modifier-string (list-difference mods no-dups-mods))))
                              no-dups-mods))))))
 
 (declaim (ftype (function (&key (:code integer) (:value string)

@@ -3,7 +3,11 @@
 
 ;; TODO: Reexport nkeymaps/keyscheme.
 (uiop:define-package nkeymaps
-  (:use #:common-lisp #:nkeymaps/types)
+  (:use #:common-lisp
+        #:nkeymaps/types
+        #:nkeymaps/conditions)
+  (:reexport #:nkeymaps/types
+             #:nkeymaps/conditions)
   (:import-from #:fset)
   (:export
    #:modifier=
@@ -49,16 +53,6 @@
    #:binding-keys
 
    #:compose
-
-   ;; conditions
-   #:cycle
-   #:duplicate-modifiers
-   #:override-existing-binding
-   #:bad-modifier
-   #:make-key-required-arg
-   #:empty-keyspec
-   #:empty-value
-   #:empty-modifiers
 
    ;; scheme
    #:keyscheme

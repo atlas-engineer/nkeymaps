@@ -1,7 +1,22 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(in-package :nkeymaps)
+(uiop:define-package nkeymaps/conditions
+  (:use #:common-lisp)
+  (:export
+   #:cycle
+   #:duplicate-modifiers
+   #:override-existing-binding
+   #:bad-modifier
+   #:make-key-required-arg
+   #:empty-keyspec
+   #:empty-value
+   #:empty-modifiers)
+  (:documentation "Package listing conditions."))
+(in-package :nkeymaps/conditions)
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps/conditions))
 
 (define-condition cycle (warning)
   ((message :initarg :message :accessor message :initform "Cycle detect in keymap")
@@ -15,7 +30,7 @@ This is possible if a bound value is a keymap that occured before."))
   ((message :initarg :message :accessor message :initform "Duplicate modifiers")
    (modifiers :initarg :modifiers :accessor modifiers :initform (alex:required-argument 'modifiers)))
   (:report (lambda (c stream)
-             (format stream "~a: ~a" (message c) (mapcar #'modifier-string (modifiers c)))))
+             (format stream "~a: ~a" (message c) (modifiers c))))
   (:documentation "Warning raised when a keyspec contains multiple occurences of the same
 modifiers."))
 
