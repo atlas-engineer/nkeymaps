@@ -57,33 +57,33 @@
 (define-test inheritance ()
   "Test inheritance."
   (let* ((keyscheme-map (nkeymaps:define-keyscheme-map "test"
-                          nkeymaps:cua (list "C-c" 'copy
-                                             "C-v" 'paste)
+                          nkeymaps:default (list "C-c" 'copy
+                                                 "C-v" 'paste)
                           nkeymaps:emacs (list "M-w" 'copy
                                                "M-y" 'paste)))
-         (cua-keymap (nkeymaps:make-keymap "test-cua-map"))
+         (default-keymap (nkeymaps:make-keymap "test-deefault-map"))
          (emacs-keymap (nkeymaps:make-keymap "test-emacs-map")))
-    (nkeymaps:define-key cua-keymap
+    (nkeymaps:define-key default-keymap
       "C-c" 'copy
       "C-v" 'paste)
     (nkeymaps:define-key emacs-keymap
       "M-w" 'copy
       "M-y" 'paste)
     (assert-equal (nkeymaps:parents (gethash nkeymaps:emacs keyscheme-map))
-                  (list (gethash nkeymaps:cua keyscheme-map)))))
+                  (list (gethash nkeymaps:default keyscheme-map)))))
 
 (define-test get-keymap ()
   "Get keymap."
   (let* ((keyscheme-map (nkeymaps:define-keyscheme-map "test"
-                          nkeymaps:cua (list "C-c" 'copy
+                          nkeymaps:default (list "C-c" 'copy
                                              "C-v" 'paste)
                           nkeymaps:emacs (list "M-w" 'copy
                                                "M-y" 'paste))))
     (assert-true (nkeymaps:get-keymap nkeymaps:emacs keyscheme-map))
-    (assert-true (nkeymaps:get-keymap nkeymaps:cua keyscheme-map))
-    (assert-false (equal (nkeymaps:get-keymap nkeymaps:cua keyscheme-map)
+    (assert-true (nkeymaps:get-keymap nkeymaps:default keyscheme-map))
+    (assert-false (equal (nkeymaps:get-keymap nkeymaps:default keyscheme-map)
                          (nkeymaps:get-keymap nkeymaps:emacs keyscheme-map)))
-    (assert-equal (nkeymaps:get-keymap nkeymaps:cua keyscheme-map)
+    (assert-equal (nkeymaps:get-keymap nkeymaps:default keyscheme-map)
                   (nkeymaps:get-keymap nkeymaps:vi-normal keyscheme-map))))
 
 (define-test prioritize-scheme-over-parent ()

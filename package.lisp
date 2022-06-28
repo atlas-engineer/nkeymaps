@@ -69,6 +69,7 @@
   (:import-from #:nkeymaps/core #:make-keyscheme)
   (:export
    #:cua
+   #:default
    #:emacs
    #:vi-normal
    #:vi-insert)

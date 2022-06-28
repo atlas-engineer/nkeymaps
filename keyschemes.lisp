@@ -3,7 +3,8 @@
 
 (in-package :nkeymaps/keyscheme)
 
-(defvar cua (make-keyscheme "cua"))
-(defvar emacs (make-keyscheme "emacs" cua))
-(defvar vi-normal (make-keyscheme "vi-normal" cua emacs))
-(defvar vi-insert (make-keyscheme "vi-insert" cua))
+(defvar default (make-keyscheme "default"))
+(defvar cua (make-keyscheme "cua" default))
+(defvar emacs (make-keyscheme "emacs" default))
+(defvar vi-normal (make-keyscheme "vi-normal" default))
+(defvar vi-insert (make-keyscheme "vi-insert"))
