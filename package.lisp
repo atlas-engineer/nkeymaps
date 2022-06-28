@@ -52,6 +52,8 @@
 
    ;; conditions
    #:cycle
+   #:duplicate-modifiers
+   #:override-existing-binding
    #:bad-modifier
    #:make-key-required-arg
    #:empty-keyspec

@@ -98,9 +98,8 @@ specify a key-code binding."
                            (let* ((mods (mapcar #'modspec->modifier strings-or-modifiers))
                                   (no-dups-mods (delete-duplicates mods :test #'modifier=)))
                              (when (/= (length mods) (length no-dups-mods))
-                               (warn "Duplicate modifiers: ~a"
-                                     (mapcar #'modifier-string
-                                             (list-difference mods no-dups-mods))))
+                               (warn 'duplicate-modifiers
+                                     :modifiers (list-difference mods no-dups-mods)))
                              no-dups-mods))))))
 
 (declaim (ftype (function (&key (:code integer) (:value string)
@@ -424,7 +423,8 @@ Return KEYMAP."
       (progn
         (when (fset:@ (entries keymap) (first keys))
           ;; TODO: Notify caller properly?
-          (warn "Key was bound to ~a" (fset:@ (entries keymap) (first keys))))
+          (warn 'override-existing-binding
+                :existing-binding-value (fset:@ (entries keymap) (first keys))))
         (if bound-value
             (setf (fset:@ (entries keymap) (first keys)) bound-value)
             (setf (entries keymap) (fset:less (entries keymap) (first keys)))))

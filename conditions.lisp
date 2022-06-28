@@ -11,6 +11,24 @@
   (:documentation "Warning raised when keymap has cycles.
 This is possible if a bound value is a keymap that occured before."))
 
+(define-condition duplicate-modifiers (warning)
+  ((message :initarg :message :accessor message :initform "Duplicate modifiers")
+   (modifiers :initarg :modifiers :accessor modifiers :initform (alex:required-argument 'modifiers)))
+  (:report (lambda (c stream)
+             (format stream "~a: ~a" (message c) (mapcar #'modifier-string (modifiers c)))))
+  (:documentation "Warning raised when a keyspec contains multiple occurences of the same
+modifiers."))
+
+(define-condition override-existing-binding (warning)
+  ((message :initarg :message :accessor message :initform "Key was bound to")
+   (existing-binding-value
+    :initarg :existing-binding-value
+    :accessor existing-binding-value
+    :initform (alex:required-argument 'existing-binding-value)))
+  (:report (lambda (c stream)
+             (format stream "~a ~a" (message c) (existing-binding-value c))))
+  (:documentation "Warning raised overriding an existing binding."))
+
 (define-condition bad-modifier (error)
   ((message :initarg :message :accessor message :initform ""))
   (:report (lambda (c stream)
