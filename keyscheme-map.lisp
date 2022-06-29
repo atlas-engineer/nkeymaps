@@ -1,7 +1,7 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(in-package :nkeymaps)
+(in-package :nkeymaps/core)
 
 (defclass keyscheme ()
   ((name :initarg :name

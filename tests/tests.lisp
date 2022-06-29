@@ -62,37 +62,37 @@
   "Keyspec->key."
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "a")
-                   (nkeymaps::keyspec->key "a"))
+                   (nkeymaps/core::keyspec->key "a"))
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "a" :modifiers '("C"))
-                   (nkeymaps::keyspec->key "C-a"))
+                   (nkeymaps/core::keyspec->key "C-a"))
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "a" :modifiers '("C" "M"))
-                   (nkeymaps::keyspec->key "C-M-a"))
+                   (nkeymaps/core::keyspec->key "C-M-a"))
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "-" :modifiers '("C"))
-                   (nkeymaps::keyspec->key "C--"))
+                   (nkeymaps/core::keyspec->key "C--"))
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "-" :modifiers '("C" "M"))
-                   (nkeymaps::keyspec->key "C-M--"))
+                   (nkeymaps/core::keyspec->key "C-M--"))
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "#" :modifiers '("C"))
-                   (nkeymaps::keyspec->key "C-#"))
+                   (nkeymaps/core::keyspec->key "C-#"))
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "#")
-                   (nkeymaps::keyspec->key "#"))
+                   (nkeymaps/core::keyspec->key "#"))
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "-")
-                   (nkeymaps::keyspec->key "-"))
+                   (nkeymaps/core::keyspec->key "-"))
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :code 10 :modifiers '("C"))
-                   (nkeymaps::keyspec->key "C-#10"))
+                   (nkeymaps/core::keyspec->key "C-#10"))
   (assert-error 'nkeymaps:empty-keyspec
-                (nkeymaps::keyspec->key ""))
+                (nkeymaps/core::keyspec->key "" t))
   (assert-error 'nkeymaps:empty-value
-                (nkeymaps::keyspec->key "C-"))
+                (nkeymaps/core::keyspec->key "C-" t))
   (assert-error 'nkeymaps:empty-modifiers
-                (nkeymaps::keyspec->key "C---")))
+                (nkeymaps/core::keyspec->key "C---" t)))
 
 (defun binding= (keys1 keys2)
   (not (position nil (mapcar #'nkeymaps:key= keys1 keys2))))
@@ -102,11 +102,11 @@
   (assert-equality #'binding=
                    (list (nkeymaps:make-key :value "x" :modifiers '("C"))
                          (nkeymaps:make-key :value "f" :modifiers '("C")))
-                   (nkeymaps::keyspecs->keys "C-x C-f"))
+                   (nkeymaps/core::keyspecs->keys "C-x C-f"))
   (assert-equality #'binding=
                    (list (nkeymaps:make-key :value "x" :modifiers '("C"))
                          (nkeymaps:make-key :value "f" :modifiers '("C")))
-                   (nkeymaps::keyspecs->keys "  C-x   C-f  ")))
+                   (nkeymaps/core::keyspecs->keys "  C-x   C-f  ")))
 
 (define-test define-key-lookup-key ()
   "define-key & lookup-key."

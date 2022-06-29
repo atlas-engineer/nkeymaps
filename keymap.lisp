@@ -1,7 +1,7 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(in-package :nkeymaps)
+(in-package :nkeymaps/core)
 
 ;; TODO: Add timeout support, e.g. "jk" in less than 0.1s could be ESC in VI-style.
 
