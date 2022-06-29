@@ -142,7 +142,7 @@
       (assert-eql 'do-not-forward-me (nkeymaps:lookup-key "M-c" imported-keymap))
       (assert-eql 'hit-me (nkeymaps:lookup-key "M-c" new-keymap)))))
 
-(define-test define-key-type-catching ()
+(define-test define-keyscheme-type-catching ()
   "Catch bad keyspecs."
   (let ((form '(lambda ()
                 (nkeymaps:define-keyscheme-map "foo" ()
