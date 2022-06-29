@@ -9,13 +9,6 @@
   (:export
    #:define-modifier
    #:modifier=
-   #:+control+
-   #:+meta+
-   #:+shift+
-   #:+super+
-   #:+hyper+
-
-
 
    #:key
    #:make-key
@@ -36,12 +29,6 @@
    #:bound-type
    #:modifiers
 
-   #:translate-remove-shift-toggle-case
-   #:translate-remove-shift
-   #:translate-remove-but-first-control
-   #:translate-remove-shift-but-first-control
-   #:translate-remove-shift-but-first-control-toggle-case
-   #:translate-shifted-control-combinations
    #:*translator*
 
    #:*print-shortcut*
@@ -76,13 +63,41 @@
   (:documentation "Package holding the list of well-known keyschemes.
 We use a dedicated package so that keyschemes can easily be listed and completed."))
 
+(uiop:define-package nkeymaps/modifier
+  (:use #:common-lisp)
+  (:import-from #:nkeymaps/core #:define-modifier)
+  (:export
+   #:+control+
+   #:+meta+
+   #:+shift+
+   #:+super+
+   #:+hyper+)
+  (:documentation "Package holding the list of predefined modifiers.
+We use a dedicated package so that modifiers can easily be listed and completed.
+See `nkeymaps:define-modifier'."))
+
+(uiop:define-package nkeymaps/translator
+  (:use #:common-lisp #:nkeymaps/core #:nkeymaps/modifier)
+  (:export
+   #:translate-remove-shift-toggle-case
+   #:translate-remove-shift
+   #:translate-remove-but-first-control
+   #:translate-remove-shift-but-first-control
+   #:translate-remove-shift-but-first-control-toggle-case
+   #:translate-shifted-control-combinations)
+  (:documentation "Package holding the list of predefined translators.
+We use a dedicated package so that modifiers can easily be listed and completed.
+See `nkeymaps:*translator*'."))
+
 (uiop:define-package nkeymaps
   (:use #:common-lisp)
   (:use-reexport
    #:nkeymaps/types
    #:nkeymaps/conditions
    #:nkeymaps/core
-   #:nkeymaps/keyscheme)
+   #:nkeymaps/keyscheme
+   #:nkeymaps/modifier
+   #:nkeymaps/translator)
   (:documentation "
 The workflow goes as follows:
 - Make a keymap with `make-keymap'.

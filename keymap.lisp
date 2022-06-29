@@ -49,12 +49,6 @@ filters out the modifier in its `modifiers' slot."
     (push result *modifier-list*)
     result))
 
-(defparameter +control+ (define-modifier :string "control" :shortcut "C"))
-(defparameter +meta+ (define-modifier :string "meta" :shortcut "M"))
-(defparameter +shift+ (define-modifier :string "shift" :shortcut "s"))
-(defparameter +super+ (define-modifier :string "super" :shortcut "S"))
-(defparameter +hyper+ (define-modifier :string "hyper" :shortcut "H"))
-
 (deftype key-status-type ()
   `(or (eql :pressed) (eql :released)))
 
@@ -194,92 +188,7 @@ Note that '-' or '#' as a last character is supported, e.g. 'control--' and
   (let* ((result (delete "" (uiop:split-string spec) :test #'string=)))
     (mapcar #'keyspec->key result)))
 
-(declaim (ftype (function (string) string) toggle-case))
-(defun toggle-case (string)
-  "Return the input with reversed case if it has only one character."
-  (if (= 1 (length string))
-      (let ((down (string-downcase string)))
-        (if (string= down string)
-            (string-upcase string)
-            down))
-      string))
-
-(defun translate-remove-shift-toggle-case (keys)
-  "With shift, keys without shift and with their key value case reversed:
-'shift-a shift-B' -> 'A b'."
-  (let ((shift? (find +shift+ keys :key #'key-modifiers :test #'fset:find)))
-    (when shift?
-      (mapcar (lambda (key)
-                (copy-key key :modifiers (fset:less (key-modifiers key) +shift+)
-                              :value (toggle-case (key-value key))))
-              keys))))
-
-(defun translate-remove-shift (keys)
-  "With shift, keys without shift: 'shift-a' -> 'a'."
-  (let ((shift? (find +shift+ keys :key #'key-modifiers :test #'fset:find)))
-    (when shift?
-      (mapcar (lambda (key)
-                (copy-key key :modifiers (fset:less (key-modifiers key) +shift+)))
-              keys))))
-
-(defun translate-remove-but-first-control (keys)
-  "With control, keys without control except for the first key:
-'C-x C-c' -> 'C-x c'."
-  (let ((control? (find +control+ (rest keys) :key #'key-modifiers :test #'fset:find)))
-    (when control?
-      (cons (first keys)
-            (mapcar (lambda (key)
-                      (copy-key key :modifiers (fset:less (key-modifiers key) +control+)))
-                    (rest keys))))))
-
-(defun translate-remove-shift-but-first-control (keys)
-  "With control and shift, keys without control except for the first key and
-without shift everywhere: 'C-shift-C C-shift-f' -> 'C-C f. "
-  (let ((shift? (find +shift+ keys :key #'key-modifiers :test #'fset:find))
-        (control? (find +control+ (rest keys) :key #'key-modifiers :test #'fset:find)))
-    (when (and control? shift?)
-               (cons (copy-key (first keys)
-                               :modifiers (fset:less (key-modifiers (first keys)) +shift+))
-                     (mapcar (lambda (key)
-                               (copy-key key :modifiers (fset:set-difference (key-modifiers key)
-                                                                             (fset:set +control+ +shift+))))
-                             (rest keys))))))
-
-(defun translate-remove-shift-but-first-control-toggle-case (keys)
-  "With control and shift, keys without control except for the first key and
-without shift everywhere: 'C-shift-C C-shift-f' -> 'C-c F. "
-  (let ((control? (find +control+ (rest keys) :key #'key-modifiers :test #'fset:find))
-        (shift? (find +shift+ keys :key #'key-modifiers :test #'fset:find)))
-    (when (and control? shift?)
-               (cons (copy-key (first keys)
-                               :value (toggle-case (key-value (first keys)))
-                               :modifiers (fset:less (key-modifiers (first keys)) +shift+))
-                     (mapcar (lambda (key)
-                               (copy-key key
-                                         :value (toggle-case (key-value key))
-                                         :modifiers (fset:set-difference (key-modifiers key)
-                                                                         (fset:set +control+ +shift+))))
-                             (rest keys))))))
-
-(defun translate-shift-control-combinations (keys)
-  "Return the successive translations of
-- `translate-remove-shift',
-- `translate-remove-shift-toggle-case',
-- `translate-remove-but-first-control',
-- `translate-remove-shift-but-first-control',
-- `translate-remove-shift-but-first-control-toggle-case'.
-
-We first remove shift before toggle the case because we want 's-A' to match an
-'A' binding before matching 'a'."
-  (delete nil
-          (mapcar (lambda (translator) (funcall translator keys))
-                  (list #'translate-remove-shift
-                        #'translate-remove-shift-toggle-case
-                        #'translate-remove-but-first-control
-                        #'translate-remove-shift-but-first-control
-                        #'translate-remove-shift-but-first-control-toggle-case))))
-
-(defparameter *translator* #'translate-shift-control-combinations
+(defparameter *translator* (lambda (keys) (list keys))
   "Key translator to use in `keymap' objects.
 When no binding is found, call this function to
 generate new bindings to lookup.  The function takes a list of `key' objects and
