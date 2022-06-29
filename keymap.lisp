@@ -521,7 +521,7 @@ For now the status is not encoded in the keyspec, this may change in the future.
                                          #'modifier-shortcut
                                          #'modifier-string))))
     (the (values keyspecs-type &optional)
-         (uiop:strcat (if (str:empty? modifiers) "" (uiop:strcat modifiers "-"))
+         (uiop:strcat (if (uiop:emptyp modifiers) "" (uiop:strcat modifiers "-"))
                       value))))
 
 (declaim (ftype (function ((list-of key)) keyspecs-type) keys->keyspecs))
