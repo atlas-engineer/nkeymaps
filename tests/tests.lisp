@@ -6,8 +6,6 @@
 (defun empty-keymap (&rest parents)
   (apply #'nkeymaps:make-keymap "anonymous" parents))
 
-;; TODO: Test with CCL.
-
 (define-test make-key ()
   "Make key."
   (let* ((key (nkeymaps:make-key :code 38 :value "a" :modifiers '("C")))
@@ -31,6 +29,14 @@
                 (nkeymaps:make-key :value "a" :modifiers '("Z")))
   (assert-error 'nkeymaps:make-key-required-arg
                 (nkeymaps:make-key :status :pressed)))
+
+(define-test define-key-type-catching ()
+  "Catch bad keyspecs."
+  (let ((form '(lambda ()
+                (let ((keymap (nkeymaps:make-keymap "anonymous")))
+                  (nkeymaps:define-key keymap "z---" 'open-file)))))
+    (assert-true (nth-value 2 (compile nil form)))
+    (assert-warning 'warning (compile nil form))))
 
 (define-test make-same-key ()
   "Make same key."

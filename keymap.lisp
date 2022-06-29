@@ -360,13 +360,10 @@ Accepted modifiers for this `keymap'.")))
 (deftype keyspecs-type ()
   `(and string (satisfies keyspecs->keys)))
 
-;; We need a macro to check that bindings are valid at compile time.
-;; This is because most Common Lisp implementations are not capable of checking
-;; types that use `satisfies' for non-top-level symbols.
-;; We can verify this with:
-;;
-;;   (compile nil (lambda () (nkeymaps::define-key keymap "C-x C-f" 'open-file)))
-(defmacro define-key (keymap keyspecs bound-value &rest more-keyspecs-value-pairs)
+(declaim (ftype (function (keymap (or keyspecs-type list) (or keymap t)
+                                  &rest (or keyspecs-type list keymap t)))
+                define-key))
+(defun define-key (keymap keyspecs bound-value &rest more-keyspecs-value-pairs)
   "Bind KEYS to BOUND-VALUE in KEYMAP.
 Return KEYMAP.
 
@@ -399,34 +396,40 @@ Remapping keys:
 
   (define-key foo-map '(:remap foo-a) 'foo-value)
   (define-key foo-map `(:remap foo-a ,bar-map) 'new-value)"
-  ;; The type checking of KEYMAP is done by `define-key*'.
   (let ((keyspecs-value-pairs (append (list keyspecs bound-value) more-keyspecs-value-pairs)))
-    (loop :for (keyspecs nil . nil) :on keyspecs-value-pairs :by #'cddr
-          :do (check-type keyspecs (or keyspecs-type list)))
-    `(progn
-       ,@(loop :for (keyspecs bound-value . nil) :on keyspecs-value-pairs :by #'cddr
-               :collect (list 'define-key* keymap keyspecs bound-value))
-       ,keymap)))
+    (alex:doplist (keyspecs bound-value keyspecs-value-pairs)
+      (unless (typep bound-value (bound-type keymap))
+        ;; (error 'type-error "Bound value ~a not of type ~a"
+        ;;        bound-value (bound-type keymap))
+        (assert (typep bound-value (bound-type keymap)) (bound-value)
+                'type-error :datum bound-value :expected-type (bound-type keymap)))
+      (let ((keys (cond
+                    ((and (listp keyspecs) (eq (first keyspecs) :remap))
+                     (let ((other-value (second keyspecs))
+                           (other-keymap (or (third keyspecs) keymap)))
+                       (keyspecs->keys (first (binding-keys other-value other-keymap)))))
+                    ((listp keyspecs)
+                     (mapcar (alex:curry #'apply #'make-key) keyspecs))
+                    (t (keyspecs->keys keyspecs)))))
+        (bind-key keymap keys bound-value)))
+    keymap))
 
-(declaim (ftype (function (keymap (or keyspecs-type list) (or keymap t))) define-key*))
-(defun define-key* (keymap keyspecs bound-value)
-  "Prepare arguments before defining keys.
-See `define-key' for the user-facing function."
-  (unless (typep bound-value (bound-type keymap))
-    (assert (typep bound-value (bound-type keymap)) (bound-value)
-            'type-error :datum bound-value :expected-type (bound-type keymap))
-    ;; (error 'type-error "Bound value ~a not of type ~a"
-    ;;        bound-value (bound-type keymap))
-    )
-  (let ((keys (cond
-                ((and (listp keyspecs) (eq (first keyspecs) :remap))
-                 (let ((other-value (second keyspecs))
-                       (other-keymap (or (third keyspecs) keymap)))
-                   (keyspecs->keys (first (binding-keys other-value other-keymap)))))
-                ((listp keyspecs)
-                 (mapcar (alex:curry #'apply #'make-key) keyspecs))
-                (t (keyspecs->keys keyspecs)))))
-    (bind-key keymap keys bound-value)))
+(define-compiler-macro define-key (&whole form
+                                          keymap
+                                          keyspecs bound-value
+                                          &rest more-keyspecs-value-pairs)
+  "We need a compiler macro to check that bindings are valid at compile time.
+This is because most Common Lisp implementations are not capable of checking
+types that use `satisfies' for non-top-level symbols.
+We can verify this with:
+
+\(compile nil (lambda () (nkeymaps::define-key keymap \"C-x C-f\" 'open-file)))"
+  (declare (ignore keymap))
+  (let ((keyspecs-value-pairs (append (list keyspecs bound-value) more-keyspecs-value-pairs)))
+    (alex:doplist (keyspecs _ keyspecs-value-pairs)
+      (when (stringp keyspecs)
+        (check-type keyspecs (or keyspecs-type list))))
+    form))
 
 (defun legal-modifiers-p (key keymap)
   "Whether KEY's modifiers are allowed in KEYMAP."
