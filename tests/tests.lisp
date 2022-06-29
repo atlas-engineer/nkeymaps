@@ -441,12 +441,12 @@
     (nkeymaps:define-key keymap "a" nil)
     (assert-equality #'fset:equal?
                      (fset:empty-map)
-                     (nkeymaps::entries keymap))
+                     (nkeymaps/core::entries keymap))
     (nkeymaps:define-key keymap "C-c b" 'foo-b)
     (nkeymaps:define-key keymap "C-c b" nil)
     (assert-equality #'fset:equal?
                      (fset:empty-map)
-                     (nkeymaps::entries keymap))))
+                     (nkeymaps/core::entries keymap))))
 
 (define-test remap ()
   "remap."
