@@ -123,7 +123,7 @@
                          nkeymaps:default (list
                                            "M-c" 'hit-me
                                            "C-c" 'hit-me-again)))
-         (new-map (nkeymaps:define-keyscheme-map "imported" (:import imported-map)
+         (new-map (nkeymaps:define-keyscheme-map "imported" `(:import ,imported-map)
                     nkeymaps:default (list
                                       "M-a" 'back
                                       "C-c" 'hit-me-differently))))
@@ -142,7 +142,10 @@
       (assert-eql 'do-not-forward-me (nkeymaps:lookup-key "M-c" imported-keymap))
       (assert-eql 'hit-me (nkeymaps:lookup-key "M-c" new-keymap)))))
 
-;; (prove:subtest "Make scheme with type errors" ; TODO: How do we test macro-expansion-time error?
-;;   (prove:is-error (nkeymaps:define-keyscheme-map
-;;                       nkeymaps:cua (list "C-" 'copy))
-;;                   'type-error))
+(define-test define-key-type-catching ()
+  "Catch bad keyspecs."
+  (let ((form '(lambda ()
+                (nkeymaps:define-keyscheme-map "foo" ()
+                    nkeymaps:cua (list "C-" 'copy)))))
+    (assert-true (nth-value 2 (compile nil form)))
+    (assert-warning 'warning (compile nil form))))

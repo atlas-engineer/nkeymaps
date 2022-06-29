@@ -74,51 +74,20 @@ existing keyscheme `cua`."
              keyscheme-map)
     new-keyscheme-map))
 
-(declaim (ftype (function (string (or null keyscheme-map) keyscheme list &rest (or keyscheme list))
+(declaim (ftype (function (string list
+                                  keyscheme list
+                                  &rest (or keyscheme list))
                           keyscheme-map)
-                define-scheme*))
-(defun define-keyscheme-map* (name-prefix import keyscheme bindings &rest more-keyschemes+bindings-pairs)
-  "Define `keyscheme-map'.
-See `define-keyscheme-map' for the user-facing function."
-  (let ((name+bindings-pairs (append (list keyscheme bindings) more-keyschemes+bindings-pairs))
-        (keyscheme-map (if import
-                           (copy-keyscheme-map import)
-                           (make-hash-table :test #'equal))))
-    (unless import
-      (loop :for (keyscheme nil . nil) :on name+bindings-pairs :by #'cddr
-            :do (setf (gethash keyscheme keyscheme-map)
-                      (let ((new-keymap (make-keymap (format nil "~a-~a-map" name-prefix (name keyscheme)))))
-                        (setf (modifiers new-keymap) (modifiers keyscheme))
-                        (setf (bound-type new-keymap) (bound-type keyscheme))
-                        new-keymap))))
-    ;; Set parents now that all keymaps exist.
-    (maphash (lambda (keyscheme keymap)
-               (setf (parents keymap)
-                     (delete nil
-                             (mapcar (lambda (parent-keyscheme) (gethash parent-keyscheme keyscheme-map))
-                                     (parents keyscheme)))))
-             keyscheme-map)
-    ;; Set bindings.
-    (loop :for (keyscheme bindings . nil) :on name+bindings-pairs :by #'cddr
-          :for keymap = (gethash keyscheme keyscheme-map)
-          :do (loop :for (keyspecs bound-value . nil) :on bindings :by #'cddr
-                    :do (define-key* keymap keyspecs bound-value))) ; TODO: Can we use define-key?
-    keyscheme-map))
-
-(defun quoted-symbol-p (arg)
-  (and (listp arg)
-       (eq (first arg) 'quote)
-       (= 2 (length arg))))
-
-;; TODO: Replace with compiler-macro.  Then test type errors.
-;; TODO: Replace keyscheme-specifier with name followed by options.
-(defmacro define-keyscheme-map (name-prefix (&key import)
-                                keyscheme bindings
-                                &rest more-keyscheme+bindings-pairs)
+                define-keyscheme-map))
+(defun define-keyscheme-map (name-prefix options keyscheme bindings
+                             &rest more-keyschemes+bindings-pairs)
   "Return a keyscheme-map, a hash table with `keyscheme's as key and `keymap's
 holding BINDINGS as value.
 
 The keymap names are prefixed with NAME-PREFIX and suffixed with \"-map\".
+
+OPTIONS is list of keyword arguments.
+For now the only supported option is IMPORT.
 
 When given a `keyscheme-map' to IMPORT, it is used as initial values for the new
 keyscheme-map.  The content is copied.  Further alteration to the imported
@@ -129,35 +98,76 @@ keyspecs at compile-time.
 
 Example:
 
-  (define-keyscheme-map \"my-mode\"
+  (define-keyscheme-map \"my-mode\" '()
     nkeymaps/keyscheme:cua (list
-                   \"C-c\" 'copy
-                   \"C-v\" 'paste)
+                            \"C-c\" 'copy
+                            \"C-v\" 'paste)
 
     nkeymaps/keyscheme:emacs '(\"M-w\" copy
-                      \"M-y\" paste))
+                               \"M-y\" paste))
 
-`nkeymaps/keyscheme:cua' and `nkeymaps/keyscheme:emacs' are pre-defined keyschemes.  To define a new
-keyscheme, see `make-keyscheme'.
+`nkeymaps/keyscheme:cua' and `nkeymaps/keyscheme:emacs' are pre-defined keyschemes.
+To define a new keyscheme, see `make-keyscheme'.
 
-`nkeymaps/keyscheme:cua' is a parent of `nkeymaps/keyscheme:emacs'; thus, in the above example,
-the Emacs keymap will have the CUA keymap as parent.
-The keyscheme-map keymaps are named \"my-mode-cua-map\" and \"my-mode-emacs-map\"."
+`nkeymaps/keyscheme:cua' is a parent of `nkeymaps/keyscheme:emacs'; thus, in the
+above example, the Emacs keymap will have the CUA keymap as parent.
+The keyscheme-map keymaps are named \"my-mode-cua-map\" and
+\"my-mode-emacs-map\"."
+  (destructuring-bind (&key import) options
+    (let ((name+bindings-pairs (append (list keyscheme bindings) more-keyschemes+bindings-pairs))
+          (keyscheme-map (if import
+                             (copy-keyscheme-map import)
+                             (make-hash-table :test #'equal))))
+      (unless import
+        (alex:doplist (keyscheme _ name+bindings-pairs)
+          (setf (gethash keyscheme keyscheme-map)
+                (let ((new-keymap (make-keymap (format nil "~a-~a-map" name-prefix (name keyscheme)))))
+                  (setf (modifiers new-keymap) (modifiers keyscheme))
+                  (setf (bound-type new-keymap) (bound-type keyscheme))
+                  new-keymap))))
+      ;; Set parents now that all keymaps exist.
+      (maphash (lambda (keyscheme keymap)
+                 (setf (parents keymap)
+                       (delete nil
+                               (mapcar (lambda (parent-keyscheme) (gethash parent-keyscheme keyscheme-map))
+                                       (parents keyscheme)))))
+               keyscheme-map)
+      ;; Set bindings.
+      (alex:doplist (keyscheme bindings name+bindings-pairs)
+        (let ((keymap (gethash keyscheme keyscheme-map)))
+          (alex:doplist (keyspecs bound-value bindings)
+            (define-key keymap keyspecs bound-value))))
+      keyscheme-map)))
+
+(defun quoted-symbol-p (arg)
+  (and (listp arg)
+       (eq (first arg) 'quote)
+       (= 2 (length arg))))
+
+(define-compiler-macro define-keyscheme-map (&whole form
+                                                    name-prefix options
+                                                    keyscheme bindings
+                                                    &rest more-keyscheme+bindings-pairs)
+  "See the `define-key' compiler-macro for why we need one here too."
+  (declare (ignore name-prefix options))
   (let ((keyscheme+bindings-pairs (append (list keyscheme bindings) more-keyscheme+bindings-pairs)))
-    (loop :for (keyscheme quoted-bindings . nil) :on keyscheme+bindings-pairs :by #'cddr
-          :for bindings = (rest quoted-bindings)
-          :do (check-type keyscheme symbol)
-          :when (boundp keyscheme)
-            :do (check-type (symbol-value keyscheme) keyscheme)
-          :do (check-type bindings list)
-          :do (loop :for (keyspecs bound-value . nil) :on bindings :by #'cddr
-                    ;; :when (boundp keyscheme)
-                    ;; :do (check-type keyspecs (or keyspecs-type list))
-                    :when (and (boundp keyscheme) (quoted-symbol-p bound-value))
-                      :do (assert (typep (second bound-value) (bound-type (symbol-value keyscheme))) (bound-value)
-                                  'type-error :datum (second bound-value) :expected-type (bound-type (symbol-value keyscheme)))))
-    `(progn
-       (define-keyscheme-map* ,name-prefix ,import ,keyscheme ,bindings ,@more-keyscheme+bindings-pairs))))
+    (alex:doplist (keyscheme quoted-bindings keyscheme+bindings-pairs)
+      (when (and (symbolp keyscheme)
+                 (boundp keyscheme))
+        (check-type (symbol-value keyscheme) keyscheme))
+      ;; (log:info quoted-bindings)
+      (let ((bindings (if (eq 'quote (first quoted-bindings))
+                          (first (rest quoted-bindings))
+                          (rest quoted-bindings)) ))
+        ;; (log:info bindings)
+        ;; (check-type bindings list)
+        (alex:doplist (keyspecs bound-value bindings)
+          (when (stringp keyspecs)
+            (check-type keyspecs (or keyspecs-type list)))
+          (when (and (boundp keyscheme) (quoted-symbol-p bound-value))
+            (assert (typep (second bound-value) (bound-type (symbol-value keyscheme))) (bound-value)
+                    'type-error :datum (second bound-value) :expected-type (bound-type (symbol-value keyscheme))))))))
+  form)
 
 (declaim (ftype (function (keyscheme keyscheme-map) (or keymap null)) get-keymap))
 (defun get-keymap (keyscheme keyscheme-map)
@@ -179,7 +189,6 @@ useful in complement to `define-keyscheme-map' to make a scheme with pre-existin
 keymaps."
   (let ((keyscheme-map (make-hash-table :test #'equal))
         (keyscheme+keymap-pairs (append (list keyscheme keymap) more-keyscheme+keymap-pairs)))
-    ;; TODO: Use `alex:doplist'.
-    (loop :for (keyscheme keymap) :on keyscheme+keymap-pairs :by #'cddr
-          :do (setf (gethash keyscheme keyscheme-map) keymap))
+    (alex:doplist (keyscheme keymap keyscheme+keymap-pairs)
+      (setf (gethash keyscheme keyscheme-map) keymap))
     keyscheme-map))
