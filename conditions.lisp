@@ -11,7 +11,8 @@
    #:make-key-required-arg
    #:empty-keyspec
    #:empty-value
-   #:empty-modifiers)
+   #:empty-modifiers
+   #:bad-keyspec)
   (:documentation "Package listing conditions."))
 (in-package :nkeymaps/conditions)
 
@@ -63,13 +64,27 @@ modifiers."))
              (format stream "~a" "Empty keyspec."))))
 
 (define-condition empty-value (error)
-  ()
+  ((keyspec
+    :initarg :keyspec
+    :accessor keyspec
+    :initform (alex:required-argument 'keyspec)))
   (:report (lambda (c stream)
-             (declare (ignore c))
-             (format stream "~a" "Empty key code or value."))))
+             (format stream "Empty key code or value in keyspec ~s" (keyspec c)))))
 
 (define-condition empty-modifiers (error)
-  ()
+  ((keyspec
+    :initarg :keyspec
+    :accessor keyspec
+    :initform (alex:required-argument 'keyspec)))
   (:report (lambda (c stream)
-             (declare (ignore c))
-             (format stream "~a" "Empty modifier(s)."))))
+             (format stream "Empty modifier(s) in keyspec ~s." (keyspec c)))))
+
+(define-condition bad-keyspec (warning)
+  ((message :initarg :message :accessor message :initform "Illegal keyspec")
+   (error-condition
+    :initarg :error-condition
+    :accessor error-condition
+    :initform (alex:required-argument 'error-condition)))
+  (:report (lambda (c stream)
+             (format stream "~a: ~a" (message c) (error-condition c))))
+  (:documentation "Warning raised when trying to derive a key from an illegal keyspec."))

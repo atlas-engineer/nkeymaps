@@ -6,6 +6,10 @@
         #:nkeymaps/types
         #:nkeymaps/conditions)
   (:import-from #:fset)
+  (:import-from #:alexandria
+                #:compose
+                #:curry
+                #:rcurry)
   (:export
    #:define-modifier
    #:modifier=

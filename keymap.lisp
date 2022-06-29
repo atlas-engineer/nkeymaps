@@ -146,8 +146,8 @@ key values because `fset:equal?` folds case."
       :equal
       :unequal))
 
-(declaim (ftype (function (string) key) keyspec->key))
-(defun keyspec->key (string)
+(declaim (ftype (function (string &optional boolean) key) keyspec->key))
+(defun keyspec->key (string &optional error-p)
   "Parse STRING and return a new `key'.
 The specifier is expected to be in the form
 
@@ -158,35 +158,40 @@ CODE/VALUE is either a code that starts with '#' or a key symbol.
 
 Note that '-' or '#' as a last character is supported, e.g. 'control--' and
 'control-#' are valid."
-  (when (string= string "")
-    (error 'empty-keyspec))
-  (let* ((last-nonval-hyphen (or (position #\- string :from-end t
-                                                      :end (1- (length string)))
-                                 -1))
-         (code 0)
-         (value "")
-         (code-or-value (subseq string (1+ last-nonval-hyphen)))
-         (rest (subseq string 0 (1+ last-nonval-hyphen)))
-         (modifiers (butlast (uiop:split-string rest :separator "-"))))
-    (when (find "" modifiers :test #'string=)
-      (error 'empty-modifiers))
-    (when (and (<= 2 (length code-or-value))
-               (string= (subseq code-or-value (1- (length code-or-value)))
-                        "-"))
-      (error 'empty-value))
-    (if (and (<= 2 (length code-or-value))
-             (string= "#" (subseq code-or-value 0 1)))
-        (setf code (or (parse-integer code-or-value :start 1 :junk-allowed t)
-                       code))
-        (setf value code-or-value))
-    (make-key :code code :value value :modifiers modifiers)))
+  (handler-bind ((error (if error-p
+                            #'identity
+                            (lambda (c)
+                              (warn 'bad-keyspec :error-condition c)
+                              (return-from keyspec->key)))))
+    (when (string= string "")
+      (error 'empty-keyspec))
+    (let* ((last-nonval-hyphen (or (position #\- string :from-end t
+                                                        :end (1- (length string)))
+                                   -1))
+           (code 0)
+           (value "")
+           (code-or-value (subseq string (1+ last-nonval-hyphen)))
+           (rest (subseq string 0 (1+ last-nonval-hyphen)))
+           (modifiers (butlast (uiop:split-string rest :separator "-"))))
+      (when (find "" modifiers :test #'string=)
+        (error 'empty-modifiers :keyspec string))
+      (when (and (<= 2 (length code-or-value))
+                 (string= (subseq code-or-value (1- (length code-or-value)))
+                          "-"))
+        (error 'empty-value :keyspec string))
+      (if (and (<= 2 (length code-or-value))
+               (string= "#" (subseq code-or-value 0 1)))
+          (setf code (or (parse-integer code-or-value :start 1 :junk-allowed t)
+                         code))
+          (setf value code-or-value))
+      (make-key :code code :value value :modifiers modifiers))))
 
-(declaim (ftype (function (string) (list-of key)) keyspecs->keys))
-(defun keyspecs->keys (spec)
+(declaim (ftype (function (string &optional boolean) (list-of key)) keyspecs->keys))
+(defun keyspecs->keys (spec &optional error-p)
   "Parse SPEC and return corresponding list of keys."
   ;; TODO: Return nil if SPEC is invalid?
   (let* ((result (delete "" (uiop:split-string spec) :test #'string=)))
-    (mapcar #'keyspec->key result)))
+    (mapcar (rcurry #'keyspec->key error-p) result)))
 
 (defparameter *translator* (lambda (keys) (list keys))
   "Key translator to use in `keymap' objects.
@@ -316,10 +321,11 @@ Remapping keys:
                     ((and (listp keyspecs) (eq (first keyspecs) :remap))
                      (let ((other-value (second keyspecs))
                            (other-keymap (or (third keyspecs) keymap)))
-                       (keyspecs->keys (first (binding-keys other-value other-keymap)))))
+                       (keyspecs->keys (first (binding-keys other-value other-keymap))
+                                       t)))
                     ((listp keyspecs)
                      (mapcar (alex:curry #'apply #'make-key) keyspecs))
-                    (t (keyspecs->keys keyspecs)))))
+                    (t (keyspecs->keys keyspecs t)))))
         (bind-key keymap keys bound-value)))
     keymap))
 
@@ -474,7 +480,7 @@ after the other.
 If no binding is found, the direct parents are looked up in the same order.
 And so on if the binding is still not found."
   (let* ((keys (if (stringp keys-or-keyspecs)
-                   (keyspecs->keys keys-or-keyspecs)
+                   (keyspecs->keys keys-or-keyspecs t)
                    keys-or-keyspecs))
          (matching-keymap nil)
          (matching-key nil)
