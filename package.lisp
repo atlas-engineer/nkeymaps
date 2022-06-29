@@ -89,6 +89,47 @@ The workflow goes as follows:
 - Define a binding on it with `define-key'.
 - Lookup this binding with `lookup-key'.
 
+Example:
+
+\(let* ((parent-keymap (nkeymaps:make-keymap \"parent-keymap\"))
+       (my-keymap (nkeymaps:make-keymap \"my-keymap\" parent-keymap)))
+  (nkeymaps:define-key parent-keymap
+    \"C-c\" 'copy
+    \"C-v\" 'paste)
+  (nkeymaps:define-key my-keymap
+    \"C-x\" 'cut)
+  (values
+   (nkeymaps:lookup-key \"C-x\" parent-keymap)
+   (nkeymaps:lookup-key \"C-x\" my-keymap)
+   (nkeymaps:lookup-key \"C-c\" my-keymap)))
+;; => NIL, CUT, COPY
+
+Another workflow is to use `keyscheme's which allow to compose different binding styles.
+Example:
+
+\(nkeymaps:define-keyscheme-map \"test\" ()
+                               nkeymaps:cua '(\"C-c\" copy
+                                              \"C-v\" paste)
+                               nkeymaps:emacs '(\"C-x\" cut))
+
+The default keyschemes can be listed from the `nkeymaps/keyscheme' package
+exported symbols.
+
+New keyschemes can be created with `make-keyscheme'.
+
+Keys can be created with `make-key', which gives you more fine-tuning compared
+to the \"keyspecs\" above:
+
+  (nkeymaps:make-key :code 38 :value \"a\" :modifiers '(\"C\"))
+
+The reverse-action of `lookup-key' is `binding-keys'.
+
+Keymaps can be composed with `compose'.
+
+New modifiers can be defined with `define-modifier'.
+
+   (nkeymaps:define-modifier :string \"duper\" :shortcut \"D\")
+
 Some globals can be tweaked to customize the library to your needs:
 
 - `*translator*': The function to infer the right binding when
