@@ -62,6 +62,14 @@ The main types are:
 NKeymaps was originally developed for keymap management in [[https://nyxt.atlas.engineer][Nyxt]], so the "N"
 may stand for it, or "New", or whatever poetic meaning you may find behind it!
 
+** Road-map
+
+- [ ] Lookup order (for instance parent-first or next-keymap-first) should be customizable.
+
+- [ ] For now =*translator*= is a global, but ideally it would be part of the
+  keyscheme and keymap.  But this would impact the lookup order, since
+  translations come after all the keymaps and their parents have been searched for.
+
 ** Change log
 
 *** 1.0.0
