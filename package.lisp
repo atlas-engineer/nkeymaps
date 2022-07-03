@@ -103,9 +103,9 @@ See `nkeymaps:*translator*'."))
    #:nkeymaps/translator)
   (:documentation "
 The workflow goes as follows:
-- Make a keymap with `make-keymap'.
-- Define a binding on it with `define-key'.
-- Lookup this binding with `lookup-key'.
+- Make a keymap with `nkeymaps:make-keymap'.
+- Define a binding on it with `nkeymaps:define-key'.
+- Lookup this binding with `nkeymaps:lookup-key'.
 
 Example:
 
@@ -122,7 +122,9 @@ Example:
    (nkeymaps:lookup-key \"C-c\" my-keymap)))
 ;; => NIL, CUT, COPY
 
-Another workflow is to use `keyscheme's which allow to compose different binding styles.
+Another workflow is to use `nkeymaps:keyscheme's which allow to compose
+different binding styles.
+
 Example:
 
 \(nkeymaps:define-keyscheme-map \"test\" ()
@@ -130,29 +132,33 @@ Example:
                                               \"C-v\" paste)
                                nkeymaps:emacs '(\"C-x\" cut))
 
-The default keyschemes can be listed from the `nkeymaps/keyscheme' package
+The default keyschemes can be listed from the `nkeymaps/keyscheme:' package
 exported symbols.
 
-New keyschemes can be created with `make-keyscheme'.
+New keyschemes can be created with `nkeymaps:make-keyscheme'.
 
-Keys can be created with `make-key', which gives you more fine-tuning compared
-to the \"keyspecs\" above:
+Keys can be created with `nkeymaps:make-key', which gives you more fine-tuning
+compared to the \"keyspecs\" above:
 
   (nkeymaps:make-key :code 38 :value \"a\" :modifiers '(\"C\"))
 
-The reverse-action of `lookup-key' is `binding-keys'.
+You can also specify key codes from the keyspec directly.  For instance,
+\"C-#10\" corresponds to keycode 10 with the `nkeymaps:+control+'.
 
-Keymaps can be composed with `compose'.
 
-New modifiers can be defined with `define-modifier'.
+The reverse-action of `nkeymaps:lookup-key' is `nkeymaps:binding-keys'.
+
+Keymaps can be composed with `nkeymaps:compose'.
+
+New modifiers can be defined with `nkeymaps:define-modifier'.
 
    (nkeymaps:define-modifier :string \"duper\" :shortcut \"D\")
 
 Some globals can be tweaked to customize the library to your needs:
 
-- `*translator*': The function to infer the right binding when
+- `nkeymaps:*translator*': The function to infer the right binding when
   the exact binding hits nothing.
-- `*print-shortcuts*': Print modifiers using their short form instead of the
+- `nkeymaps:*print-shortcut*': Print modifiers using their short form instead of the
   full name, e.g. \"C\" instead of \"control\"."))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
