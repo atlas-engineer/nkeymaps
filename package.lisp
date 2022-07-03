@@ -132,7 +132,7 @@ Example:
                                               \"C-v\" paste)
                                nkeymaps:emacs '(\"C-x\" cut))
 
-The default keyschemes can be listed from the `nkeymaps/keyscheme:' package
+The default keyschemes can be listed from the `nkeymaps/keyscheme' package
 exported symbols.
 
 New keyschemes can be created with `nkeymaps:make-keyscheme'.
