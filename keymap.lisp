@@ -146,7 +146,7 @@ key values because `fset:equal?` folds case."
       :equal
       :unequal))
 
-(declaim (ftype (function (string &optional boolean) key) keyspec->key))
+(declaim (ftype (function (string &optional boolean) (or key null)) keyspec->key))
 (defun keyspec->key (string &optional error-p)
   "Parse STRING and return a new `key'.
 The specifier is expected to be in the form
@@ -162,7 +162,7 @@ Note that '-' or '#' as a last character is supported, e.g. 'control--' and
                             #'identity
                             (lambda (c)
                               (warn 'bad-keyspec :error-condition c)
-                              (return-from keyspec->key)))))
+                              (return-from keyspec->key nil)))))
     (when (string= string "")
       (error 'empty-keyspec))
     (let* ((last-nonval-hyphen (or (position #\- string :from-end t
