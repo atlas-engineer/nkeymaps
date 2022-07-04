@@ -31,9 +31,9 @@ The main types are:
 - Support keycode.
 - Validate keyspec at compile time.
 - ~define-key~ can set multiple bindings in a single call.
-- Support multiple scheme to make it easy to switch between, say, Emacs-style
+- Support multiple keyschemes to make it easy to switch between, say, Emacs-style
   and VI-style bindings.  This orthogonality to keymaps composes better than
-  having multiple keymaps: changing scheme applies to the entire program, which
+  having multiple keymaps: changing keyscheme applies to the entire program, which
   is easier than looping through all keymaps to change them.
 - Translate keyspecs as a fallback.  For instance if =shift-a= is unbound, check
   =A=.
@@ -57,7 +57,55 @@ The main types are:
 - Global or local bindings: it's up to the calling application to manage the
   locality of their keymaps.
 
+** Example
+
+#+begin_src lisp
+  (let* ((parent-keymap (nkeymaps:make-keymap "parent-keymap"))
+         (my-keymap (nkeymaps:make-keymap "my-keymap" parent-keymap)))
+    (nkeymaps:define-key parent-keymap
+      "C-c" 'copy
+      "C-v" 'paste)
+    (nkeymaps:define-key my-keymap
+      "C-x" 'cut)
+    (values
+     (nkeymaps:lookup-key "C-x" parent-keymap)
+     (nkeymaps:lookup-key "C-x" my-keymap)
+     (nkeymaps:lookup-key "C-c" my-keymap)))
+
+  ;; => NIL, CUT, COPY
+#+end_src
+
+See the [[file:package.lisp][package]] documentation for a usage guide and more examples.
+
 ** History
 
 NKeymaps was originally developed for keymap management in [[https://nyxt.atlas.engineer][Nyxt]], so the "N"
 may stand for it, or "New", or whatever poetic meaning you may find behind it!
+
+** Road-map
+
+- [ ] Lookup order (for instance parent-first or next-keymap-first) should be customizable.
+
+- [ ] For now =*translator*= is a global, but ideally it would be part of the
+  keyscheme and keymap.  But this would impact the lookup order, since
+  translations come after all the keymaps and their parents have been searched for.
+
+** Change log
+
+*** 1.0.0
+
+- Renamed =scheme-name= to =keyscheme= and =scheme= to =keyscheme-map=.
+  It's more consistent and intuitive.  The previous naming was really confusing.
+- All warnings have now their own conditions, see the =nkeymaps/conditions= package.
+- =define-keyscheme-map= has a different syntax, it's now
+  #+begin_src lisp
+    (define-keyscheme-map "NAME-PREFIX" (:import OPTIONAL-KEYSCHEME-MAP-TO-IMPORT)
+      KEYSCHEME BINDINGS...)
+  #+end_src
+- The predefined =keyscheme=s are now accessible from the =nkeymaps= package.
+- New =default= =keyscheme= which is the new parent of other keyschemes
+  (including =cua=), instead of =cua=.
+- =*modifier-list*= is no longer exported.  Instead, both =keyscheme= and
+  =keymap= have a =modifiers= slot for the modifiers they accept.
+- Switched testing framework from =Prove= to =Lisp-Unit2=.
+- Removed the =cl-str= dependency.

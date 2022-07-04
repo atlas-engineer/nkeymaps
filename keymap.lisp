@@ -1,7 +1,7 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(in-package :nkeymaps)
+(in-package :nkeymaps/core)
 
 ;; TODO: Add timeout support, e.g. "jk" in less than 0.1s could be ESC in VI-style.
 
@@ -33,20 +33,24 @@
 \"M\") is the same as (\"M\" \"C\")."
   (fset:compare-lexicographically (modifier-string x) (modifier-string y)))
 
-(defvar +control+ (make-modifier :string "control" :shortcut "C"))
-(defvar +meta+ (make-modifier :string "meta" :shortcut "M"))
-(defvar +shift+ (make-modifier :string "shift" :shortcut "s"))
-(defvar +super+ (make-modifier :string "super" :shortcut "S"))
-(defvar +hyper+ (make-modifier :string "hyper" :shortcut "H"))
-
-(defparameter *modifier-list*
-  (list +control+ +meta+ +shift+ +super+ +hyper+)
+(defparameter *modifier-list* (list)
   "List of known modifiers.
 `make-key' and `define-key' raise an error when setting a modifier that is not
 in this list.")
 
+(defun define-modifier (&rest args &key string shortcut)
+  "Return a new modifier.
+It is registered globally and can be used from any new keymap, unless the keymap
+filters out the modifier in its `modifiers' slot."
+  (declare (ignore string shortcut))
+  (let ((result (apply #'make-modifier args)))
+    (setf *modifier-list* (delete result *modifier-list*
+                                  :test #'modifier=))
+    (push result *modifier-list*)
+    result))
+
 (deftype key-status-type ()
-  `(or (eql :pressed) (eql :released)))
+  `(member :pressed :released))
 
 ;; Must be a structure so that it can served as a key in a hash-table with
 ;; #'equalp tests.
@@ -82,7 +86,7 @@ specify a key-code binding."
             (error 'bad-modifier
                    :message (format nil "Unknown modifier ~a" string-or-modifier))))))
 
-(declaim (ftype (function ((or list-of-strings
+(declaim (ftype (function ((or (list-of string)
                                fset:wb-set))
                           fset:wb-set)
                 modspecs->modifiers))
@@ -98,9 +102,8 @@ specify a key-code binding."
                            (let* ((mods (mapcar #'modspec->modifier strings-or-modifiers))
                                   (no-dups-mods (delete-duplicates mods :test #'modifier=)))
                              (when (/= (length mods) (length no-dups-mods))
-                               (warn "Duplicate modifiers: ~a"
-                                     (mapcar #'modifier-string
-                                             (list-difference mods no-dups-mods))))
+                               (warn 'duplicate-modifiers
+                                     :modifiers (mapcar #'modifier-string (list-difference mods no-dups-mods))))
                              no-dups-mods))))))
 
 (declaim (ftype (function (&key (:code integer) (:value string)
@@ -143,8 +146,8 @@ key values because `fset:equal?` folds case."
       :equal
       :unequal))
 
-(declaim (ftype (function (string) key) keyspec->key))
-(defun keyspec->key (string)
+(declaim (ftype (function (string &optional boolean) (or key null)) keyspec->key))
+(defun keyspec->key (string &optional error-p)
   "Parse STRING and return a new `key'.
 The specifier is expected to be in the form
 
@@ -155,122 +158,42 @@ CODE/VALUE is either a code that starts with '#' or a key symbol.
 
 Note that '-' or '#' as a last character is supported, e.g. 'control--' and
 'control-#' are valid."
-  (when (string= string "")
-    (error 'empty-keyspec))
-  (let* ((last-nonval-hyphen (or (position #\- string :from-end t
-                                                      :end (1- (length string)))
-                                 -1))
-         (code 0)
-         (value "")
-         (code-or-value (subseq string (1+ last-nonval-hyphen)))
-         (rest (subseq string 0 (1+ last-nonval-hyphen)))
-         (modifiers (butlast (str:split "-" rest))))
-    (when (find "" modifiers :test #'string=)
-      (error 'empty-modifiers))
-    (when (and (<= 2 (length code-or-value))
-               (string= (subseq code-or-value (1- (length code-or-value)))
-                        "-"))
-      (error 'empty-value))
-    (if (and (<= 2 (length code-or-value))
-             (string= "#" (subseq code-or-value 0 1)))
-        (setf code (or (parse-integer code-or-value :start 1 :junk-allowed t)
-                       code))
-        (setf value code-or-value))
-    (make-key :code code :value value :modifiers modifiers)))
+  (handler-bind ((error (if error-p
+                            #'identity
+                            (lambda (c)
+                              (warn 'bad-keyspec :error-condition c)
+                              (return-from keyspec->key nil)))))
+    (when (string= string "")
+      (error 'empty-keyspec))
+    (let* ((last-nonval-hyphen (or (position #\- string :from-end t
+                                                        :end (1- (length string)))
+                                   -1))
+           (code 0)
+           (value "")
+           (code-or-value (subseq string (1+ last-nonval-hyphen)))
+           (rest (subseq string 0 (1+ last-nonval-hyphen)))
+           (modifiers (butlast (uiop:split-string rest :separator "-"))))
+      (when (find "" modifiers :test #'string=)
+        (error 'empty-modifiers :keyspec string))
+      (when (and (<= 2 (length code-or-value))
+                 (string= (subseq code-or-value (1- (length code-or-value)))
+                          "-"))
+        (error 'empty-value :keyspec string))
+      (if (and (<= 2 (length code-or-value))
+               (string= "#" (subseq code-or-value 0 1)))
+          (setf code (or (parse-integer code-or-value :start 1 :junk-allowed t)
+                         code))
+          (setf value code-or-value))
+      (make-key :code code :value value :modifiers modifiers))))
 
-(declaim (ftype (function (string) list-of-keys) keyspecs->keys))
-(defun keyspecs->keys (spec)
+(declaim (ftype (function (string &optional boolean) (list-of key)) keyspecs->keys))
+(defun keyspecs->keys (spec &optional error-p)
   "Parse SPEC and return corresponding list of keys."
   ;; TODO: Return nil if SPEC is invalid?
-  (let* ((result (str:split " " spec :omit-nulls t)))
-    (mapcar #'keyspec->key result)))
+  (let* ((result (delete "" (uiop:split-string spec) :test #'string=)))
+    (mapcar (rcurry #'keyspec->key error-p) result)))
 
-(declaim (ftype (function (string) string) toggle-case))
-(defun toggle-case (string)
-  "Return the input with reversed case if it has only one character."
-  (if (= 1 (length string))
-      (let ((down (string-downcase string)))
-        (if (string= down string)
-            (string-upcase string)
-            down))
-      string))
-
-(defun translate-remove-shift-toggle-case (keys)
-  "With shift, keys without shift and with their key value case reversed:
-'shift-a shift-B' -> 'A b'."
-  (let ((shift? (find +shift+ keys :key #'key-modifiers :test #'fset:find)))
-    (when shift?
-      (mapcar (lambda (key)
-                (copy-key key :modifiers (fset:less (key-modifiers key) +shift+)
-                              :value (toggle-case (key-value key))))
-              keys))))
-
-(defun translate-remove-shift (keys)
-  "With shift, keys without shift: 'shift-a' -> 'a'."
-  (let ((shift? (find +shift+ keys :key #'key-modifiers :test #'fset:find)))
-    (when shift?
-      (mapcar (lambda (key)
-                (copy-key key :modifiers (fset:less (key-modifiers key) +shift+)))
-              keys))))
-
-(defun translate-remove-but-first-control (keys)
-  "With control, keys without control except for the first key:
-'C-x C-c' -> 'C-x c'."
-  (let ((control? (find +control+ (rest keys) :key #'key-modifiers :test #'fset:find)))
-    (when control?
-      (cons (first keys)
-            (mapcar (lambda (key)
-                      (copy-key key :modifiers (fset:less (key-modifiers key) +control+)))
-                    (rest keys))))))
-
-(defun translate-remove-shift-but-first-control (keys)
-  "With control and shift, keys without control except for the first key and
-without shift everywhere: 'C-shift-C C-shift-f' -> 'C-C f. "
-  (let ((shift? (find +shift+ keys :key #'key-modifiers :test #'fset:find))
-        (control? (find +control+ (rest keys) :key #'key-modifiers :test #'fset:find)))
-    (when (and control? shift?)
-               (cons (copy-key (first keys)
-                               :modifiers (fset:less (key-modifiers (first keys)) +shift+))
-                     (mapcar (lambda (key)
-                               (copy-key key :modifiers (fset:set-difference (key-modifiers key)
-                                                                             (fset:set +control+ +shift+))))
-                             (rest keys))))))
-
-(defun translate-remove-shift-but-first-control-toggle-case (keys)
-  "With control and shift, keys without control except for the first key and
-without shift everywhere: 'C-shift-C C-shift-f' -> 'C-c F. "
-  (let ((control? (find +control+ (rest keys) :key #'key-modifiers :test #'fset:find))
-        (shift? (find +shift+ keys :key #'key-modifiers :test #'fset:find)))
-    (when (and control? shift?)
-               (cons (copy-key (first keys)
-                               :value (toggle-case (key-value (first keys)))
-                               :modifiers (fset:less (key-modifiers (first keys)) +shift+))
-                     (mapcar (lambda (key)
-                               (copy-key key
-                                         :value (toggle-case (key-value key))
-                                         :modifiers (fset:set-difference (key-modifiers key)
-                                                                         (fset:set +control+ +shift+))))
-                             (rest keys))))))
-
-(defun translate-shift-control-combinations (keys)
-  "Return the successive translations of
-- `translate-remove-shift',
-- `translate-remove-shift-toggle-case',
-- `translate-remove-but-first-control',
-- `translate-remove-shift-but-first-control',
-- `translate-remove-shift-but-first-control-toggle-case'.
-
-We first remove shift before toggle the case because we want 's-A' to match an
-'A' binding before matching 'a'."
-  (delete nil
-          (mapcar (lambda (translator) (funcall translator keys))
-                  (list #'translate-remove-shift
-                        #'translate-remove-shift-toggle-case
-                        #'translate-remove-but-first-control
-                        #'translate-remove-shift-but-first-control
-                        #'translate-remove-shift-but-first-control-toggle-case))))
-
-(defparameter *translator* #'translate-shift-control-combinations
+(defparameter *translator* (lambda (keys) (list keys))
   "Key translator to use in `keymap' objects.
 When no binding is found, call this function to
 generate new bindings to lookup.  The function takes a list of `key' objects and
@@ -310,9 +233,15 @@ Type should allow `keymap's, so it should probably be in the form
    (parents :accessor parents
             :initarg :parents
             :initform nil
-            :type list-of-keymaps
+            :type (list-of keymap)
             :documentation "List of parent keymaps.
-Parents are ordered by priority, the first parent has highest priority.")))
+Parents are ordered by priority, the first parent has highest priority.")
+   (modifiers :accessor modifiers
+              :initarg :modifiers
+              :initform (fset:convert 'fset:set  *modifier-list*)
+              :type fset:wb-set
+              :documentation "
+Accepted modifiers for this `keymap'.")))
 
 (defmethod print-object ((keymap keymap) stream)
   (print-unreadable-object (keymap stream :type t :identity t)
@@ -345,13 +274,10 @@ Parents are ordered by priority, the first parent has highest priority.")))
 (deftype keyspecs-type ()
   `(and string (satisfies keyspecs->keys)))
 
-;; We need a macro to check that bindings are valid at compile time.
-;; This is because most Common Lisp implementations are not capable of checking
-;; types that use `satisfies' for non-top-level symbols.
-;; We can verify this with:
-;;
-;;   (compile 'foo (lambda () (nkeymaps::define-key keymap "C-x C-f" 'open-file)))
-(defmacro define-key (keymap keyspecs bound-value &rest more-keyspecs-value-pairs)
+(declaim (ftype (function (keymap (or keyspecs-type list) (or keymap t)
+                                  &rest (or keyspecs-type list keymap t)))
+                define-key))
+(defun define-key (keymap keyspecs bound-value &rest more-keyspecs-value-pairs)
   "Bind KEYS to BOUND-VALUE in KEYMAP.
 Return KEYMAP.
 
@@ -384,64 +310,86 @@ Remapping keys:
 
   (define-key foo-map '(:remap foo-a) 'foo-value)
   (define-key foo-map `(:remap foo-a ,bar-map) 'new-value)"
-  ;; The type checking of KEYMAP is done by `define-key*'.
   (let ((keyspecs-value-pairs (append (list keyspecs bound-value) more-keyspecs-value-pairs)))
-    (loop :for (keyspecs nil . nil) :on keyspecs-value-pairs :by #'cddr
-          :do (check-type keyspecs (or keyspecs-type list)))
-    `(progn
-       ,@(loop :for (keyspecs bound-value . nil) :on keyspecs-value-pairs :by #'cddr
-               :collect (list 'define-key* keymap keyspecs bound-value))
-       ,keymap)))
+    (alex:doplist (keyspecs bound-value keyspecs-value-pairs)
+      (unless (typep bound-value (bound-type keymap))
+        ;; (error 'type-error "Bound value ~a not of type ~a"
+        ;;        bound-value (bound-type keymap))
+        (assert (typep bound-value (bound-type keymap)) (bound-value)
+                'type-error :datum bound-value :expected-type (bound-type keymap)))
+      (let ((keys (cond
+                    ((and (listp keyspecs) (eq (first keyspecs) :remap))
+                     (let ((other-value (second keyspecs))
+                           (other-keymap (or (third keyspecs) keymap)))
+                       (keyspecs->keys (first (binding-keys other-value other-keymap))
+                                       t)))
+                    ((listp keyspecs)
+                     (mapcar (alex:curry #'apply #'make-key) keyspecs))
+                    (t (keyspecs->keys keyspecs t)))))
+        (bind-key keymap keys bound-value)))
+    keymap))
 
-(declaim (ftype (function (keymap (or keyspecs-type list) (or keymap t))) define-key*))
-(defun define-key* (keymap keyspecs bound-value)
-  "Prepare arguments before defining keys.
-See `define-key' for the user-facing function."
-  (unless (typep bound-value (bound-type keymap))
-    (assert (typep bound-value (bound-type keymap)) (bound-value)
-            'type-error :datum bound-value :expected-type (bound-type keymap))
-    ;; (error 'type-error "Bound value ~a not of type ~a"
-    ;;        bound-value (bound-type keymap))
-    )
-  (let ((keys (cond
-                ((and (listp keyspecs) (eq (first keyspecs) :remap))
-                 (let ((other-value (second keyspecs))
-                       (other-keymap (or (third keyspecs) keymap)))
-                   (keyspecs->keys (first (binding-keys other-value other-keymap)))))
-                ((listp keyspecs)
-                 (mapcar (alex:curry #'apply #'make-key) keyspecs))
-                (t (keyspecs->keys keyspecs)))))
-    (bind-key keymap keys bound-value)))
+(define-compiler-macro define-key (&whole form
+                                          keymap
+                                          keyspecs bound-value
+                                          &rest more-keyspecs-value-pairs)
+  "We need a compiler macro to check that bindings are valid at compile time.
+This is because most Common Lisp implementations are not capable of checking
+types that use `satisfies' for non-top-level symbols.
+We can verify this with:
 
-(declaim (ftype (function (keymap list-of-keys (or keymap t)) (values keymap &optional))
+\(compile nil (lambda () (nkeymaps::define-key keymap \"C-x C-f\" 'open-file)))"
+  (declare (ignore keymap))
+  (let ((keyspecs-value-pairs (append (list keyspecs bound-value) more-keyspecs-value-pairs)))
+    (alex:doplist (keyspecs _ keyspecs-value-pairs)
+      (when (stringp keyspecs)
+        (check-type keyspecs (or keyspecs-type list))))
+    form))
+
+(defun legal-modifiers-p (key keymap)
+  "Whether KEY's modifiers are allowed in KEYMAP."
+  (fset:empty? (fset:set-difference (key-modifiers key)
+                                    (modifiers keymap))))
+
+(declaim (ftype (function (keymap (list-of key) (or keymap t)) (values keymap &optional))
                 bind-key))
 (defun bind-key (keymap keys bound-value)
   "Recursively bind the KEYS to keymaps starting from KEYMAP.
 The last key is bound to BOUND-VALUE.
 If BOUND-VALUE is nil, the key is unbound.
+If KEYS has modifiers that are not allowed in KEYMAP, do nothing.
+
 Return KEYMAP."
-  (if (= (length keys) 1)
-      (progn
-        (when (fset:@ (entries keymap) (first keys))
-          ;; TODO: Notify caller properly?
-          (warn "Key was bound to ~a" (fset:@ (entries keymap) (first keys))))
-        (if bound-value
-            (setf (fset:@ (entries keymap) (first keys)) bound-value)
-            (setf (entries keymap) (fset:less (entries keymap) (first keys)))))
-      (let ((submap (fset:@ (entries keymap) (first keys))))
-        (when (and (not (keymap-p submap))
-                   bound-value)
-          (setf submap (make-keymap "anonymous"))
-          (setf (fset:@ (entries keymap) (first keys)) submap))
-        (bind-key submap (rest keys) bound-value)
-        (unless bound-value
-          (when (fset:equal? (fset:empty-map) (entries submap))
-            (setf (entries keymap) (fset:less (entries keymap) (first keys)))))))
+  (cond
+    ((not (legal-modifiers-p (first keys) keymap))
+     (error 'bad-modifier
+            :message (format nil "Keymap ~a only accepts modifiers ~a, got ~a"
+                             keymap
+                             (modifiers keymap)
+                             (key-modifiers (first keys)))))
+    ((= (length keys) 1)
+     (when (fset:@ (entries keymap) (first keys))
+       ;; TODO: Notify caller properly?
+       (warn 'override-existing-binding
+             :existing-binding-value (fset:@ (entries keymap) (first keys))))
+     (if bound-value
+         (setf (fset:@ (entries keymap) (first keys)) bound-value)
+         (setf (entries keymap) (fset:less (entries keymap) (first keys)))))
+    (t
+     (let ((submap (fset:@ (entries keymap) (first keys))))
+       (when (and (not (keymap-p submap))
+                  bound-value)
+         (setf submap (make-keymap "anonymous"))
+         (setf (fset:@ (entries keymap) (first keys)) submap))
+       (bind-key submap (rest keys) bound-value)
+       (unless bound-value
+         (when (fset:equal? (fset:empty-map) (entries submap))
+           (setf (entries keymap) (fset:less (entries keymap) (first keys))))))))
   keymap)
 
 (declaim (ftype (function (keymap
-                           list-of-keys
-                           list-of-keymaps)
+                           (list-of key)
+                           (list-of keymap))
                           (or keymap t))
                 lookup-keys-in-keymap))
 (defun lookup-keys-in-keymap (keymap keys visited)
@@ -449,20 +397,26 @@ Return KEYMAP."
 Return nil when KEYS is not found in KEYMAP.
 VISITED is used to detect cycles."
   (when keys
-    (let ((hit (fset:@ (entries keymap) (first keys))))
-      (when hit
-        (cond
-          ((and (keymap-p hit)
-                (rest keys))
-           (lookup-key* hit (rest keys) visited))
-          ((and (not (keymap-p hit))
-                (rest keys))
-           ;; Found a binding instead of a prefix keymap, skip it since it
-           ;; should be shadowed.
-           ;; Example: we loop up "C-x C-f" which is meant to be bound to
-           ;; 'open-file, but "C-x" is bound to 'cut in a parent keymap.
-           nil)
-          (t hit))))))
+    (if (legal-modifiers-p (first keys) keymap)
+        (let ((hit (fset:@ (entries keymap) (first keys))))
+          (when hit
+            (cond
+              ((and (keymap-p hit)
+                    (rest keys))
+               (lookup-key* hit (rest keys) visited))
+              ((and (not (keymap-p hit))
+                    (rest keys))
+               ;; Found a binding instead of a prefix keymap, skip it since it
+               ;; should be shadowed.
+               ;; Example: we loop up "C-x C-f" which is meant to be bound to
+               ;; 'open-file, but "C-x" is bound to 'cut in a parent keymap.
+               nil)
+              (t hit))))
+        (error 'bad-modifier
+               :message (format nil "Keymap ~a only accepts modifiers ~a, got ~a"
+                                keymap
+                                (modifiers keymap)
+                                (key-modifiers (first keys)))))))
 
 (defun keymap-tree->list (keymaps visited)
   "Flatten the KEYMAPS into a list.
@@ -479,14 +433,14 @@ Return (keymap1 keymap2 k1a k1b k2a k1ap)."
             (keymap-tree->list
              (delete-if (lambda (keymap)
                           (when (find keymap visited)
-                            (warn "Cycle detected in keymap ~a" keymap)
+                            (warn 'cycle :keymap keymap)
                             t))
                         (alex:mappend #'parents keymaps))
              (append keymaps visited)))))
 
-(declaim (ftype (function ((or keymap list-of-keymaps)
-                           list-of-keys
-                           list-of-keymaps)
+(declaim (ftype (function ((or keymap (list-of keymap))
+                           (list-of key)
+                           (list-of keymap))
                           (values (or keymap t) (or keymap null)))
                 lookup-key*))
 (defun lookup-key* (keymap-or-keymaps keys visited)
@@ -497,7 +451,7 @@ As a second value, return the matching keymap."
          (result
           (some (lambda (keymap)
                   (if (find keymap visited)
-                      (warn "Cycle detected in keymap ~a" keymap)
+                      (warn 'cycle :keymap keymap)
                       (let ((hit (lookup-keys-in-keymap
                                   keymap
                                   keys
@@ -508,9 +462,9 @@ As a second value, return the matching keymap."
                 (keymap-tree->list (uiop:ensure-list keymap-or-keymaps) '()))))
     (values result matching-keymap)))
 
-(declaim (ftype (function ((or list-of-keys keyspecs-type)
-                           (or keymap list-of-keymaps))
-                          (values (or keymap t) (or keymap null) list-of-keys))
+(declaim (ftype (function ((or (list-of key) keyspecs-type)
+                           (or keymap (list-of keymap)))
+                          (values (or keymap t) (or keymap null) (list-of key)))
                 lookup-key))
 (defun lookup-key (keys-or-keyspecs keymap-or-keymaps)
   ;; We name this user-facing function using the singular form to be consistent
@@ -521,12 +475,12 @@ As a third value, return the possibly translated KEYS.
 
 Return NIL if no value is found.
 
-First keymap parents are looked up one after the other.
-Then keys translation are looked up one after the other.
-The same is done for the successive keymaps if KEYMAP-OR-KEYMAPS is a list of
-keymaps."
+The successive keymaps from KEYMAP-OR-KEYMAPS (if a list) are looked up one
+after the other.
+If no binding is found, the direct parents are looked up in the same order.
+And so on if the binding is still not found."
   (let* ((keys (if (stringp keys-or-keyspecs)
-                   (nkeymaps::keyspecs->keys keys-or-keyspecs)
+                   (keyspecs->keys keys-or-keyspecs t)
                    keys-or-keyspecs))
          (matching-keymap nil)
          (matching-key nil)
@@ -546,6 +500,19 @@ keymaps."
 (defparameter *print-shortcut* t
   "Whether to print the short form of the modifiers.")
 
+(defun string-join (strings separator &key end)
+  "Adapted from `serapeum:string-join'."
+  (with-output-to-string (s)
+    (if strings
+        (progn
+          (write-string (string (first strings)) s)
+          (dolist (string (cdr strings))
+            (write-string (string separator) s)
+            (write-string (string string) s))
+          (when end
+            (write-string (string separator) s)))
+        (make-string 0))))
+
 (declaim (ftype (function (key) keyspecs-type) key->keyspec))
 (defun key->keyspec (key)
   "Return the keyspec of KEY.
@@ -554,23 +521,23 @@ For now the status is not encoded in the keyspec, this may change in the future.
   (let ((value (if (zerop (key-code key))
                    (key-value key)
                    (format nil "#~a" (key-code key))))
-        (modifiers (fset:reduce (lambda (&rest mods) (str:join "-" mods))
+        (modifiers (fset:reduce (lambda (&rest mods) (string-join mods "-"))
                                 (key-modifiers key)
                                 :key (if *print-shortcut*
                                          #'modifier-shortcut
                                          #'modifier-string))))
     (the (values keyspecs-type &optional)
-         (str:concat (if (str:empty? modifiers) "" (str:concat modifiers "-"))
-                     value))))
+         (uiop:strcat (if (uiop:emptyp modifiers) "" (uiop:strcat modifiers "-"))
+                      value))))
 
-(declaim (ftype (function (list-of-keys) keyspecs-type) keys->keyspecs))
+(declaim (ftype (function ((list-of key)) keyspecs-type) keys->keyspecs))
 (defun keys->keyspecs (keys)
   "Return the keyspecs (a list of `keyspec') for KEYS.
 See `key->keyspec' for the details."
   (the (values keyspecs-type &optional)
-       (str:join " " (mapcar #'key->keyspec keys))))
+       (string-join (mapcar #'key->keyspec keys) " ")))
 
-(declaim (ftype (function (keymap &optional list-of-keymaps) fset:map) keymap->map*))
+(declaim (ftype (function (keymap &optional (list-of keymap)) fset:map) keymap->map*))
 (defun keymap->map* (keymap &optional visited)
   "Return a map of (KEYSPEC SYM) from KEYMAP."
   (flet ((fold-keymap (result key sym)
@@ -578,7 +545,7 @@ See `key->keyspec' for the details."
              (if (keymap-p sym)
                  (cond
                    ((find sym visited)
-                    (warn "Cycle detected in keymap ~a" keymap)
+                    (warn 'cycle :keymap keymap)
                     result)
                    (t
                     (fset:map-union result
@@ -611,7 +578,7 @@ Keymaps are ordered by precedence, highest precedence comes first."
                ((null keymap)
                 '())
                ((find keymap visited)
-                (warn "Cycle detected in parent keymap ~a" keymap)
+                (warn 'cycle  :keymap keymap)
                 '())
                (t
                 (cons keymap
@@ -651,7 +618,7 @@ highest precedence."
            (setf (entries merge) (fset:map-union (entries keymap2) (entries keymap1)))
            (apply #'compose merge (rest (rest keymaps)))))))))
 
-(declaim (ftype (function (t keymap &key (:test function)) list-of-strings) binding-keys*))
+(declaim (ftype (function (t keymap &key (:test function)) (list-of string)) binding-keys*))
 (defun binding-keys* (binding keymap &key (test #'eql))
   "Return a the list of `keyspec's bound to BINDING in KEYMAP.
 The list is sorted alphabetically to ensure reproducible results.
@@ -665,14 +632,14 @@ Comparison against BINDING is done with TEST."
                    ((funcall test binding sym)
                     (push (list key) result))
                    ((and (keymap-p sym) (find sym visited))
-                    (warn "Cycle detected in keymap ~a" keymap))
+                    (warn 'cycle :keymap keymap))
                    ((keymap-p sym)
                     (dolist (hit (scan-keymap sym (cons keymap visited)))
                       (push (cons key hit) result)))))
                result)))
     (sort (mapcar #'keys->keyspecs (scan-keymap keymap '())) #'string<)))
 
-(declaim (ftype (function (t (or keymap list-of-keymaps) &key (:test function))
+(declaim (ftype (function (t (or keymap (list-of keymap)) &key (:test function))
                           (values list list))
                 binding-keys))
 (defun binding-keys (bound-value keymap-or-keymaps &key (test #'eql))
