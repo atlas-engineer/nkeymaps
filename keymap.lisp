@@ -50,7 +50,7 @@ filters out the modifier in its `modifiers' slot."
     result))
 
 (deftype key-status-type ()
-  `(or (eql :pressed) (eql :released)))
+  `(member :pressed :released))
 
 ;; Must be a structure so that it can served as a key in a hash-table with
 ;; #'equalp tests.
