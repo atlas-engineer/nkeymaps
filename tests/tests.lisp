@@ -23,6 +23,7 @@
 
 (define-test make-bad-key ()
   "Make bad key."
+  #-(or clisp allegro)
   (assert-error 'type-error
                 (nkeymaps:make-key :value "a" :status :dummy))
   (assert-error 'nkeymaps:bad-modifier
