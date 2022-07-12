@@ -643,17 +643,18 @@ Comparison against BINDING is done with TEST."
                           (values list list))
                 binding-keys))
 (defun binding-keys (bound-value keymap-or-keymaps &key (test #'eql))
-  "Return the list of `keyspec's bound to BINDING in KEYMAP.
-The result is ordered by priority of keymaps, that is, keymaps hits from
-beginning to end of the keymap list.
-Duplicates are removed.
-Shadowed bindings are removed.
+  "Return the list of `keyspec's bound to BINDING in KEYMAP-OR-KEYMAPS.
 
-A a second value, return an alist of (keyspec keymap) for all the `keyspec's
-bound to BINDING in KEYMAP.
+The order of the result is dictated by the order of KEYMAP-OR-KEYMAPS.
+
+As a second value, return an alist of (keyspec keymap) for all the
+`keyspec's bound to BINDING in KEYMAP.
+
 Comparison against BINDING is done with TEST.
 
-For instance, to list all keymaps that have a binding, call
+Duplicates and shadowed bindings are removed.
+
+For instance, to list all keymaps that have a binding, call:
 
   (mapcar #'second (nth-value 1 (binding-keys ...)))"
   (let ((alist (alex:mappend (lambda (keymap)
