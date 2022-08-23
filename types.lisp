@@ -17,7 +17,7 @@ functions for the `satisfies' type condition."))
        (every (lambda (x) (typep x type)) list)))
 
 (deftype list-of (type)
-  "The empty list of a proper list of TYPE elements.
+  "The empty list or a proper list of TYPE elements.
 Unlike `(cons TYPE *)', it checks all the elements.
 `(cons TYPE *)' does not accept the empty list."
   (let ((predicate-name (intern (uiop:strcat "LIST-OF-" (symbol-name type) "-P")
