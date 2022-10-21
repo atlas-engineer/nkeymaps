@@ -27,7 +27,7 @@
                (:file "tests")
                (:file "keyscheme-tests"))
   :perform (test-op (op c)
-                    (let ((test-result (symbol-call :lisp-unit2 :run-tests :package :nkeymaps/tests
+                    (let ((test-results (symbol-call :lisp-unit2 :run-tests :package :nkeymaps/tests
                                                     :run-contexts (find-symbol "WITH-SUMMARY-CONTEXT" :lisp-unit2))))
                       (when (or
                              (uiop:symbol-call :lisp-unit2 :failed test-results)
