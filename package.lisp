@@ -87,7 +87,7 @@ See `nkeymaps:define-modifier'."))
    #:translate-remove-but-first-control
    #:translate-remove-shift-but-first-control
    #:translate-remove-shift-but-first-control-toggle-case
-   #:translate-shifted-control-combinations)
+   #:translate-shift-control-combinations)
   (:documentation "Package holding the list of predefined translators.
 We use a dedicated package so that modifiers can easily be listed and completed.
 See `nkeymaps:*translator*'."))
