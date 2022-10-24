@@ -35,7 +35,7 @@ Accepted modifiers for this `keyscheme'.")))
   (print-unreadable-object (object stream :type t :identity t)
     (format stream "~a" (name object))))
 
-(declaim (ftype (function (string &rest keyscheme) keyscheme)
+(declaim (ftype (function (string &rest keyscheme) (values keyscheme &optional))
                 make-keyscheme))
 (defun make-keyscheme (name &rest parents)
   "Return a new `keyscheme' object.
