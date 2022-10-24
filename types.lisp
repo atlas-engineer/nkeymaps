@@ -22,8 +22,9 @@ Unlike `(cons TYPE *)', it checks all the elements.
 `(cons TYPE *)' does not accept the empty list."
   (let ((predicate-name (intern (uiop:strcat "LIST-OF-" (symbol-name type) "-P")
                                 (find-package :nkeymaps/types))))
-    (unless (fboundp predicate-name)
-      (setf (fdefinition predicate-name)
-            (lambda (object)
-              (list-of-p object type))))
+    (eval-when (:load-toplevel :compile-toplevel :execute)
+      (unless (fboundp predicate-name)
+        (setf (fdefinition predicate-name)
+              (lambda (object)
+                (list-of-p object type)))))
     `(and list (satisfies ,predicate-name))))
