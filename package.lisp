@@ -164,3 +164,5 @@ Some globals can be tweaked to customize the library to your needs:
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps/core)
   (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps))
+
+(push :nkeymaps *features*)
