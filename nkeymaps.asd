@@ -40,4 +40,4 @@
   :defsystem-depends-on ("nasdf")
   :class :nasdf-compilation-test-system
   :depends-on ("nkeymaps")
-  :packages (:nkeymaps))
+  :packages (:nkeymaps :nkeymaps/translator :nkeymaps/modifier :nkeymaps/keyscheme :nkeymaps/core))
