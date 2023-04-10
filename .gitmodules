@@ -1,0 +1,32 @@
+[submodule "_build/alexandria"]
+	path = _build/alexandria
+	url = https://gitlab.common-lisp.net/alexandria/alexandria.git
+	shallow = true
+[submodule "_build/lisp-unit2"]
+	path = _build/lisp-unit2
+	url = https://github.com/AccelerationNet/lisp-unit2
+	shallow = true
+[submodule "_build/named-readtables"]
+	path = _build/named-readtables
+	url = https://github.com/melisgl/named-readtables
+	shallow = true
+[submodule "_build/devel"]
+	path = _build/devel
+	url = https://gitlab.common-lisp.net/misc-extensions/devel.git
+	shallow = true
+[submodule "_build/mt19937"]
+	path = _build/mt19937
+	url = https://gitlab.common-lisp.net/nyxt/mt19937
+	shallow = true
+[submodule "_build/iterate"]
+	path = _build/iterate
+	url = https://gitlab.common-lisp.net/iterate/iterate.git
+	shallow = true
+[submodule "_build/cl-interpol"]
+	path = _build/cl-interpol
+	url = https://github.com/edicl/cl-interpol
+	shallow = true
+[submodule "_build/trivial-package-local-nicknames"]
+	path = _build/trivial-package-local-nicknames
+	url = https://github.com/phoe/trivial-package-local-nicknames
+	shallow = true
