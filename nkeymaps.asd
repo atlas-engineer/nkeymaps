@@ -7,7 +7,7 @@
   :author "Atlas Engineer LLC"
   :homepage "https://github.com/atlas-engineer/nkeymaps"
   :license "BSD 3-Clause"
-  :depends-on (alexandria fset trivial-package-local-nicknames uiop)
+  :depends-on ("alexandria" "fset" "trivial-package-local-nicknames" "uiop")
   :serial t
   :components ((:file "types")
                (:file "conditions")
@@ -17,20 +17,27 @@
                (:file "translators")
                (:file "keyscheme-map")
                (:file "keyschemes"))
-  :in-order-to ((test-op (test-op "nkeymaps/tests"))))
+  :in-order-to ((test-op (test-op "nkeymaps/tests")
+                         (test-op "nkeymaps/tests/compilation"))))
+
+
+(defsystem "nkeymaps/submodules"
+  :defsystem-depends-on ("nasdf")
+  :class :nasdf-submodule-system)
 
 (defsystem "nkeymaps/tests"
-  :depends-on (alexandria fset nkeymaps lisp-unit2)
-  :pathname "tests/"
+  :defsystem-depends-on ("nasdf")
+  :class :nasdf-test-system
+  :depends-on ("nkeymaps")
+  :targets (:package :nkeymaps/tests)
   :serial t
+  :pathname "tests/"
   :components ((:file "package")
                (:file "tests")
-               (:file "keyscheme-tests"))
-  :perform (test-op (op c)
-                    (let ((test-results (symbol-call :lisp-unit2 :run-tests :package :nkeymaps/tests
-                                                     :run-contexts (find-symbol "WITH-SUMMARY-CONTEXT" :lisp-unit2))))
-                      (when (or
-                             (uiop:symbol-call :lisp-unit2 :failed test-results)
-                             (uiop:symbol-call :lisp-unit2 :errors test-results))
-                        ;; Arbitrary but hopefully recognizable exit code.
-                        (quit 18)))))
+               (:file "keyscheme-tests")))
+
+(defsystem "nkeymaps/tests/compilation"
+  :defsystem-depends-on ("nasdf")
+  :class :nasdf-compilation-test-system
+  :depends-on ("nkeymaps")
+  :packages (:nkeymaps))
