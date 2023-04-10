@@ -34,3 +34,7 @@
 	path = _build/fset
 	url = https://github.com/slburson/fset
 	shallow = true
+[submodule "_build/cl-unicode"]
+	path = _build/cl-unicode
+	url = https://github.com/edicl/cl-unicode
+	shallow = true
