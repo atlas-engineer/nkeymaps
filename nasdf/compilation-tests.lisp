@@ -26,6 +26,17 @@ Likely, slot names (these don't have native `documentation' support."))
 (import 'nasdf-compilation-test-system :asdf-user)
 
 (defun valid-type-p (type-specifier)
+  "Check the TYPE-SPECIFIER for being a valid type.
+The logic is:
+- If the type is documented as a type, then a type it is.
+- Otherwise, if `typep' exits normally (with whatever return value)
+  when checking arbitrary value against this specifier, then
+  TYPE-SPECIFIER is valid.
+- And if there's an error about argument types, then TYPE-SPECIFIER is
+  the type requiring arguments. Which means: type exists, even if
+  requiring arguments.
+- If there's any other error raised by `typep', then TYPE-SPECIFIER is
+  likely not a type."
   (or (documentation type-specifier 'type)
       (handler-case
           (progn
