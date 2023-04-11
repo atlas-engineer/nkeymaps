@@ -21,11 +21,26 @@ Likely, slot names (these don't have native `documentation' support."))
 (import 'nasdf-compilation-test-system :asdf-user)
 
 (defun valid-type-p (type-specifier)
-  (handler-case
-      (progn
-        (typep t type-specifier)
-        t)
-    (error () nil)))
+  (or (documentation type-specifier 'type)
+      (handler-case
+          (progn
+            (typep t type-specifier)
+            t)
+        #+sbcl
+        (sb-kernel::arg-count-error ()
+          t)
+        #+ccl
+        (ccl::simple-program-error ()
+          (search "can't be destructured against the lambda list" (format nil "~a" e)))
+        #+ecl
+        (simple-error (e)
+          (or (search "Too few arguments" (format nil "~a" e))
+              (not (search "not a valid type specifier" (format nil "~a" e)))))
+        #+clisp
+        (simple-error (e)
+          (or (search "may not be called with 0 arguments" (format nil "~a" e))
+              (not (search "invalid type specification" (format nil "~a" e)))))
+        (error () nil))))
 
 (defun list-unbound-exports (package)
   (let ((result '()))
