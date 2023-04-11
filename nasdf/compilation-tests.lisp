@@ -11,6 +11,11 @@
     :reader packages
     :documentation "Packages to check for unbound exports.
 Sub-packages are included in the check.")
+   (unbound-symbols-to-ignore
+    :initform '()
+    :initarg :unbound-symbols-to-ignore
+    :reader unbound-symbols-to-ignore
+    :documentation "Symbols to ignore when checking for unbound exports.")
    (undocumented-symbols-to-ignore
     :initform '()
     :initarg :undocumented-symbols-to-ignore
@@ -97,11 +102,25 @@ Uses the built-in MOP abilities of every Lisp."
                                (when exports
                                  (list package exports))))
                            (cons (find-package package) (list-subpackages package)))))))
-  (defun unbound-exports (package)
+  (defun unbound-exports (package symbols-to-ignore)
     "Report unbound exported symbols for PACKAGE and all its subpackages."
     ;; NOTE: these implementations throw errors on atypical type specifier, enabling `valid-type-p'
     #+(or sbcl ccl ecl clisp)
-    (let ((report (list-offending-packages package #'list-unbound-exports "unbound exports")))
+    (let* ((report (list-offending-packages package #'list-unbound-exports "unbound exports"))
+           (report (delete
+                    nil
+                    (mapcar (lambda (rep)
+                              (destructuring-bind (package symbols)
+                                  rep
+                                (let ((really-undocumented-symbols
+                                        (remove-if (lambda (sym)
+                                                     (member (symbol-name sym) symbols-to-ignore
+                                                             :key #'symbol-name :test #'equal))
+                                                   symbols)))
+                                  (if really-undocumented-symbols
+                                      (list package really-undocumented-symbols)
+                                      nil))))
+                            report))))
       (when report
         (error "~a~&Found unbound exported symbols in ~a package~:p."
                report (length report))))
@@ -132,6 +151,6 @@ documentation (e.g. slot names)."
 
 (defmethod asdf:perform ((op asdf:test-op) (c nasdf-compilation-test-system))
   (logger "------- STARTING Compilation Testing: ~a" (packages c))
-  (mapc #'unbound-exports (packages c))
+  (mapc #'(lambda (p) (unbound-exports p (unbound-symbols-to-ignore c))) (packages c))
   (mapc #'(lambda (p) (undocumented-exports p (undocumented-symbols-to-ignore c))) (packages c))
   (logger "------- ENDING Compilation Testing: ~a" (packages c)))
