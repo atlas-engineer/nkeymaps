@@ -11,6 +11,7 @@
 
 (declaim (ftype (function ((or string modifier) (or string modifier)) boolean) modifier=))
 (defun modifier= (string-or-modifier1 string-or-modifier2)
+  "Return non-nil if STRING-OR-MODIFIER1 and STRING-OR-MODIFIER2 represent the same modifier."
   (unless (or (modifier-p string-or-modifier1)
               (modifier-p string-or-modifier2))
     (error 'bad-modifier :message "At least one of the arguments must be a modifier."))
@@ -56,6 +57,7 @@ filters out the modifier in its `modifiers' slot."
 ;; #'equalp tests.
 (defstruct (key (:constructor %make-key (code value modifiers status))
                 (:copier %copy-key))
+  "The fundamental type to represent any input, be it keyboard, mouse or others."
   (code 0 :type integer) ; TODO: Can a keycode be 0?  I think not, so 0 might be a good non-value.
   (value "" :type string)
   (modifiers (fset:set) :type fset:wb-set)
@@ -131,6 +133,8 @@ Modifiers can be either a `modifier' type or a string that will be looked up in
 (defun copy-key (key &key (code (key-code key)) (value (key-value key))
                         (modifiers (key-modifiers key))
                         (status (key-status key)))
+  "Return a new copy of KEY.
+This is useful as a low-level function to translate keys without modifying existing keys."
   (let ((new-key (%copy-key key)))
     (setf (key-value new-key) value
           (key-code new-key) code
@@ -241,7 +245,10 @@ Parents are ordered by priority, the first parent has highest priority.")
               :initform (fset:convert 'fset:set  *modifier-list*)
               :type fset:wb-set
               :documentation "
-Accepted modifiers for this `keymap'.")))
+Accepted modifiers for this `keymap'."))
+  (:documentation "A map of `key' bindings to values.
+Values must be of type `bound-type'.
+The bindings from the parents are inherited, with the children having precedence."))
 
 (defmethod print-object ((keymap keymap) stream)
   (print-unreadable-object (keymap stream :type t :identity t)
@@ -251,6 +258,7 @@ Accepted modifiers for this `keymap'.")))
                           (values keymap &optional))
                 make-keymap))
 (defun make-keymap (name &rest parents)
+  "Return a new `keymap'."
   ;; We use (values keymap &optional) type because of an SBCL limitation.
   ;; See http://www.sbcl.org/manual/#Implementation-Limitations.
   (the (values keymap &optional)
@@ -258,6 +266,7 @@ Accepted modifiers for this `keymap'.")))
                       :name name
                       :parents parents)))
 (defun keymap-p (object)
+  "Return non-nil of OBJECT is a `keymap'."
   (typep object 'keymap))
 
 (defun copy-keymap (keymap)

@@ -55,13 +55,15 @@ modifiers."))
   ()
   (:report (lambda (c stream)
              (declare (ignore c))
-             (format stream "~a" "One of CODE or VALUE must be given."))))
+             (format stream "~a" "One of CODE or VALUE must be given.")))
+  (:documentation "Error raised when `nkeymaps::make-key' is called without CODE or VALUE."))
 
 (define-condition empty-keyspec (error)
   ()
   (:report (lambda (c stream)
              (declare (ignore c))
-             (format stream "~a" "Empty keyspec."))))
+             (format stream "~a" "Empty keyspec.")))
+  (:documentation "Error raised when a `keyspec' is empty, since, it's not allowed."))
 
 (define-condition empty-value (error)
   ((keyspec
@@ -69,7 +71,8 @@ modifiers."))
     :accessor keyspec
     :initform (alex:required-argument 'keyspec)))
   (:report (lambda (c stream)
-             (format stream "Empty key code or value in keyspec ~s" (keyspec c)))))
+             (format stream "Empty key code or value in keyspec ~s" (keyspec c))))
+  (:documentation "Error raised when keyspec has no CODE nor VALUE."))
 
 (define-condition empty-modifiers (error)
   ((keyspec
@@ -77,7 +80,8 @@ modifiers."))
     :accessor keyspec
     :initform (alex:required-argument 'keyspec)))
   (:report (lambda (c stream)
-             (format stream "Empty modifier(s) in keyspec ~s." (keyspec c)))))
+             (format stream "Empty modifier(s) in keyspec ~s." (keyspec c))))
+  (:documentation "Error raised when modifier is the empty string in a keyspec."))
 
 (define-condition bad-keyspec (warning)
   ((message :initarg :message :accessor message :initform "Illegal keyspec")

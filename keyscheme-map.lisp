@@ -29,7 +29,10 @@ Type should allow `keymap's, so it should probably be in the form
               :initform (fset:convert 'fset:set  *modifier-list*)
               :type fset:wb-set
               :documentation "
-Accepted modifiers for this `keyscheme'.")))
+Accepted modifiers for this `keyscheme'."))
+  (:documentation "A keyscheme is best understood as a conventional family of bindings.
+See `nkeymaps/keyscheme:cua' for an example.
+Keyschemes can be associated to `keymap's with `keyscheme-map'."))
 
 (defmethod print-object ((object keyscheme) stream)
   (print-unreadable-object (object stream :type t :identity t)
@@ -52,12 +55,14 @@ existing keyscheme `cua`."
                       :name name
                       :parents parents)))
 
-(defun keyscheme-p (name)
-  (typep name 'keyscheme))
+(defun keyscheme-p (object)
+  "Return non-nil if OBJECT is a `keyscheme'."
+  (typep object 'keyscheme))
 
 (declaim (ftype (function (hash-table) boolean) scheme-p))
-(defun keyscheme-map-p (keyscheme-map)
-  (loop :for name :being :the hash-keys :in keyscheme-map :using (:hash-value keymap)
+(defun keyscheme-map-p (object)
+  "Return non-nil if OBJECT is a `keyscheme-map'."
+  (loop :for name :being :the hash-keys :in object :using (:hash-value keymap)
         :always (and (keyscheme-p name)
                      (keymap-p keymap))))
 
