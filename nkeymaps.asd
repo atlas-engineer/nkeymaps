@@ -40,4 +40,6 @@
   :defsystem-depends-on ("nasdf")
   :class :nasdf-compilation-test-system
   :depends-on ("nkeymaps")
-  :packages (:nkeymaps :nkeymaps/translator :nkeymaps/modifier :nkeymaps/keyscheme :nkeymaps/core))
+  :packages (:nkeymaps :nkeymaps/translator :nkeymaps/modifier :nkeymaps/keyscheme :nkeymaps/core)
+  ;; Ignore struct accessors, since they have no docstring by default.
+  :undocumented-symbols-to-ignore (:key-value :key-modifiers :key-code :key-status))
