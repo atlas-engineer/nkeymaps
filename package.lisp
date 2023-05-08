@@ -1,12 +1,12 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(uiop:define-package nkeymaps/core
-  (:use #:common-lisp
-        #:nkeymaps/types
-        #:nkeymaps/conditions)
-  (:import-from #:fset)
-  (:import-from #:alexandria
+(uiop:define-package :nkeymaps/core
+  (:use :common-lisp
+        :nkeymaps/types
+        :nkeymaps/conditions)
+  (:import-from :fset)
+  (:import-from :alexandria
                 #:curry
                 #:rcurry)
   (:export
@@ -54,9 +54,9 @@
    #:make-keyscheme-map)
   (:documentation "See the `nkeymaps' package documentation."))
 
-(uiop:define-package nkeymaps/keyscheme
-  (:use #:common-lisp)
-  (:import-from #:nkeymaps/core #:make-keyscheme)
+(uiop:define-package :nkeymaps/keyscheme
+  (:use :common-lisp)
+  (:import-from :nkeymaps/core #:make-keyscheme)
   (:export
    #:cua
    #:default
@@ -66,9 +66,9 @@
   (:documentation "Package holding the list of well-known keyschemes.
 We use a dedicated package so that keyschemes can easily be listed and completed."))
 
-(uiop:define-package nkeymaps/modifier
-  (:use #:common-lisp)
-  (:import-from #:nkeymaps/core #:define-modifier)
+(uiop:define-package :nkeymaps/modifier
+  (:use :common-lisp)
+  (:import-from :nkeymaps/core #:define-modifier)
   (:export
    #:+control+
    #:+meta+
@@ -79,8 +79,8 @@ We use a dedicated package so that keyschemes can easily be listed and completed
 We use a dedicated package so that modifiers can easily be listed and completed.
 See `nkeymaps:define-modifier'."))
 
-(uiop:define-package nkeymaps/translator
-  (:use #:common-lisp #:nkeymaps/core #:nkeymaps/modifier)
+(uiop:define-package :nkeymaps/translator
+  (:use :common-lisp :nkeymaps/core :nkeymaps/modifier)
   (:export
    #:translate-remove-shift-toggle-case
    #:translate-remove-shift
@@ -92,15 +92,15 @@ See `nkeymaps:define-modifier'."))
 We use a dedicated package so that modifiers can easily be listed and completed.
 See `nkeymaps:*translator*'."))
 
-(uiop:define-package nkeymaps
-  (:use #:common-lisp)
+(uiop:define-package :nkeymaps
+  (:use :common-lisp)
   (:use-reexport
-   #:nkeymaps/types
-   #:nkeymaps/conditions
-   #:nkeymaps/core
-   #:nkeymaps/keyscheme
-   #:nkeymaps/modifier
-   #:nkeymaps/translator)
+   :nkeymaps/types
+   :nkeymaps/conditions
+   :nkeymaps/core
+   :nkeymaps/keyscheme
+   :nkeymaps/modifier
+   :nkeymaps/translator)
   (:documentation "
 The workflow goes as follows:
 - Make a keymap with `nkeymaps:make-keymap'.

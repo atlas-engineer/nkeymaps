@@ -3,6 +3,6 @@
 
 (in-package :cl-user)
 
-(uiop:define-package nkeymaps/tests
-  (:use #:common-lisp #:lisp-unit2)
-  (:import-from #:nkeymaps))
+(uiop:define-package :nkeymaps/tests
+  (:use :common-lisp :lisp-unit2)
+  (:import-from :nkeymaps))

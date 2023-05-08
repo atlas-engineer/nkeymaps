@@ -1,8 +1,8 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(uiop:define-package nkeymaps/conditions
-  (:use #:common-lisp)
+(uiop:define-package :nkeymaps/conditions
+  (:use :common-lisp)
   (:export
    #:cycle
    #:duplicate-modifiers

@@ -1,7 +1,7 @@
 ;;;; SPDX-FileCopyrightText: Atlas Engineer LLC
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
-(uiop:define-package nkeymaps/types
+(uiop:define-package :nkeymaps/types
   (:use #:common-lisp)
   (:export #:list-of)
   (:documentation "Package for types.
