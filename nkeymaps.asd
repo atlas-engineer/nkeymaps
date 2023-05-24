@@ -6,6 +6,8 @@
   :description "General-purpose keymap management à-la Emacs."
   :author "Atlas Engineer LLC"
   :homepage "https://github.com/atlas-engineer/nkeymaps"
+  :bug-tracker "https://github.com/atlas-engineer/nkeymaps/issues"
+  :source-control (:git "https://github.com/atlas-engineer/nkeymaps.git")
   :license "BSD 3-Clause"
   :depends-on ("alexandria" "fset" "trivial-package-local-nicknames" "uiop")
   :serial t
