@@ -119,10 +119,15 @@ Example:
   (values
    (nkeymaps:lookup-key \"C-x\" parent-keymap)
    (nkeymaps:lookup-key \"C-x\" my-keymap)
-   (nkeymaps:lookup-key \"C-c\" my-keymap)))
-;; => NIL, CUT, COPY
+   (nkeymaps:lookup-key \"C-c\" my-keymap)
+   (nkeymaps:binding-keys 'cut parent-keymap)
+   (nkeymaps:binding-keys 'copy my-keymap)
+   (nkeymaps:binding-keys 'paste my-keymap)))
+;; => NIL, CUT, COPY;; => NIL, CUT, COPY, NIL, (\"C-c\"), (\"C-v\")
 
-Another workflow is to use `nkeymaps:keyscheme's which allow to compose
+Notice that the inverse of `nkeymaps:lookup-key' is `nkeymaps:binding-keys'.
+
+Another workflow is to use `nkeymaps:keyscheme's, which allows to compose
 different binding styles.
 
 Example:
@@ -144,9 +149,6 @@ compared to the \"keyspecs\" above:
 
 You can also specify key codes from the keyspec directly.  For instance,
 \"C-#10\" corresponds to keycode 10 with the `nkeymaps:+control+'.
-
-
-The reverse-action of `nkeymaps:lookup-key' is `nkeymaps:binding-keys'.
 
 Keymaps can be composed with `nkeymaps:compose'.
 
