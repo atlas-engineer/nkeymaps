@@ -6,40 +6,38 @@ inspired by Emacs.
 
 The main types are:
 
-- A =key= structure has a hardware =code=, a symbolic =value=, an ordered set of
-  modifiers (the order is to avoid inequality on permutation) and possibly more
-  in the future.
+- A =key= structure that holds:
+  - a numeric =code= :: a hardware keycode;
+  - a string =value= :: a character (except for whitespaces);
+  - an ordered set of modifiers (to ensure equality on permutation).
 
-  Whitespaces are the only reserved characters.  Anything else can be stored in
-  the =key= value.
+- A =keyspec= is a string representation of a =key= (e.g. "control-a").  A
+  =keyspecs= is the string concatenation of two or more =keyspec=s
+  (e.g. "control-a control-b control-c").
 
-- A =keyspec= is a string representation of a =key=.  A =keyspec= is a
-  space-separated string representation of a sequence of =key=s.
-
-- A =keymap= contains a hash-table where the keys are a =keyspec= and the values
-  are either a keymap or anything else.  As a special case, a =nil= value
-  unbinds the key.
+- A =keymap= contains a hash-table that maps =keyspecs= to either keymaps,
+  function designators or nil (to unbind the =keyspecs=).
 
 ** Goals
 
-- Support prefix keys to other keymaps.  For instance, prefixing my-mode-map
-  with =C-c= makes all bindings for my-mode accessible after pressing =C-c=.
-- List all bindings matching a given prefix.  (Also known as =which-key= in
-  Emacs.)
+- Define keymaps with a prefix key (commonly known as prefix keymaps).  For
+  instance, my-mode-map can be defined as a prefix keymap that makes all of its
+  bindings accessible after pressing =C-c=.
+- List all bindings matching a given prefix.
 - List the bindings associated to a command.
-- Support multiple inheritance.
-- Support keycode.
+- Multiple inheritance.
+- Keycode support.
 - Validate keyspec at compile time.
-- ~define-key~ can set multiple bindings in a single call.
-- Support multiple keyschemes to make it easy to switch between, say, Emacs-style
-  and VI-style bindings.  This orthogonality to keymaps composes better than
-  having multiple keymaps: changing keyscheme applies to the entire program, which
-  is easier than looping through all keymaps to change them.
+- Set multiple bindings in a single call to ~define-key~.
+- Multiple keyschemes to make it easy to switch between, say, Emacs-style and
+  VI-style bindings.  This orthogonality to keymaps composes better than having
+  multiple keymaps: changing keyscheme applies to the entire program, which is
+  easier than looping through all keymaps to change them.
 - Translate keyspecs as a fallback.  For instance if =shift-a= is unbound, check
   =A=.
 - Customizable behaviour with global parameters such as ~*print-shortcut*~.
-- The ~compose~ function can merge multiple keymaps together.
-- Support multiple arguments when that makes sense (e.g. multiple keymaps for
+- Merge multiple keymaps via ~compose~.
+- Handle gracefully multiple arguments when sensible (e.g. multiple keymaps for
   ~lookup-key~).
 - Key remapping à-la Emacs.
 - Typed keymaps, i.e. keymaps where bound values can only be of a given type.
@@ -60,49 +58,56 @@ The main types are:
 ** Example
 
 #+begin_src lisp
-  (let* ((parent-keymap (nkeymaps:make-keymap "parent-keymap"))
-         (my-keymap (nkeymaps:make-keymap "my-keymap" parent-keymap)))
-    (nkeymaps:define-key parent-keymap
-      "C-c" 'copy
-      "C-v" 'paste)
-    (nkeymaps:define-key my-keymap
-      "C-x" 'cut)
-    (values
-     (nkeymaps:lookup-key "C-x" parent-keymap)
-     (nkeymaps:lookup-key "C-x" my-keymap)
-     (nkeymaps:lookup-key "C-c" my-keymap)))
+(let* ((parent-keymap (nkeymaps:make-keymap "parent-keymap"))
+       (my-keymap (nkeymaps:make-keymap "my-keymap" parent-keymap)))
+  (nkeymaps:define-key parent-keymap
+    "C-c" 'copy
+    "C-v" 'paste)
+  (nkeymaps:define-key my-keymap
+    "C-x" 'cut)
+  (values
+   (nkeymaps:lookup-key "C-x" parent-keymap)
+   (nkeymaps:lookup-key "C-x" my-keymap)
+   (nkeymaps:lookup-key "C-c" my-keymap)
+   (nkeymaps:binding-keys 'cut parent-keymap)
+   (nkeymaps:binding-keys 'copy my-keymap)
+   (nkeymaps:binding-keys 'paste my-keymap)))
 
-  ;; => NIL, CUT, COPY
+;; => NIL, CUT, COPY, NIL, ("C-c"), ("C-v")
 #+end_src
 
 See the [[file:package.lisp][package]] documentation for a usage guide and more examples.
 
 ** History
 
-NKeymaps was originally developed for keymap management in [[https://nyxt.atlas.engineer][Nyxt]], so the "N"
-may stand for it, or "New", or whatever poetic meaning you may find behind it!
+NKeymaps was originally developed for keymap management in [[https://nyxt.atlas.engineer][Nyxt]], so the "N" may
+stand for it, or "New", or whatever poetic meaning you may find behind it!
 
 ** Road-map
 
-- [ ] Lookup order (for instance parent-first or next-keymap-first) should be customizable.
+- [ ] Lookup order (for instance parent-first or next-keymap-first) should be
+  customizable.
 
 - [ ] For now =*translator*= is a global, but ideally it would be part of the
   keyscheme and keymap.  But this would impact the lookup order, since
-  translations come after all the keymaps and their parents have been searched for.
+  translations come after all the keymaps and their parents have been searched
+  for.
 
 ** Change log
 
 *** 1.0.0
 
-- Renamed =scheme-name= to =keyscheme= and =scheme= to =keyscheme-map=.
-  It's more consistent and intuitive.  The previous naming was really confusing.
-- All warnings have now their own conditions, see the =nkeymaps/conditions= package.
+- Renamed =scheme-name= to =keyscheme= and =scheme= to =keyscheme-map=.  It's
+  more consistent and intuitive.  The previous naming was really confusing.
+- All warnings have now their own conditions, see the =nkeymaps/conditions=
+  package.
 - =define-keyscheme-map= has a different syntax, it's now
   #+begin_src lisp
-    (define-keyscheme-map "NAME-PREFIX" (:import OPTIONAL-KEYSCHEME-MAP-TO-IMPORT)
-      KEYSCHEME BINDINGS...)
+  (define-keyscheme-map "NAME-PREFIX" (:import OPTIONAL-KEYSCHEME-MAP-TO-IMPORT)
+    KEYSCHEME BINDINGS...)
   #+end_src
-- The predefined =keyscheme=s are now accessible from the =nkeymaps= package.
+- The predefined =keyscheme=s are now accessible from the =nkeymaps=
+  package.
 - New =default= =keyscheme= which is the new parent of other keyschemes
   (including =cua=), instead of =cua=.
 - =*modifier-list*= is no longer exported.  Instead, both =keyscheme= and
