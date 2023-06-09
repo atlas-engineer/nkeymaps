@@ -4,7 +4,7 @@
 (in-package :nkeymaps/keyscheme)
 
 (defvar default (make-keyscheme "default")
-  "The keyscheme parent to all other default keyschemes.")
+  "The keyscheme parent to all other keyschemes.")
 (defvar cua (make-keyscheme "cua" default)
   "The CUA keyscheme as popularly used by GTK, Qt, Windows, Cocoa, etc.")
 (defvar emacs (make-keyscheme "emacs" default)
