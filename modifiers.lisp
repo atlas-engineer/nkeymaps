@@ -3,7 +3,7 @@
 
 (in-package :nkeymaps/modifier)
 
-(defparameter +control+ (nkeymaps:define-modifier :string "control" :shortcut "C")
+(defparameter +control+ (define-modifier :string "control" :shortcut "C")
   "The key modifier commonly known as 'control'.")
 (defparameter +meta+ (define-modifier :string "meta" :shortcut "M")
   "The key modifier commonly known as 'meta' or 'alt'.")
