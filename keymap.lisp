@@ -145,7 +145,7 @@ This is useful as a low-level function to translate keys without modifying exist
 (defmethod fset:compare ((x key) (y key))
   "Needed to use the KEY structure as keys in Fset maps.
 Would we use the default comparison function, case-sensitivity would be lost on
-key values because `fset:equal?` folds case."
+key values because `fset:equal?' folds case."
   (if (key= x y)
       :equal
       :unequal))
@@ -153,12 +153,13 @@ key values because `fset:equal?` folds case."
 (declaim (ftype (function (string &optional boolean) (or key null)) keyspec->key))
 (defun keyspec->key (string &optional error-p)
   "Parse STRING and return a new `key'.
-The specifier is expected to be in the form
+STRING must be passed is one of two forms:
 
-  MOFIFIERS-CODE/VALUE
+  MODIFIERS-#<code>
+  MODIFIERS-<value>
 
 MODIFIERS are hyphen-separated modifiers as per `*modifier-list*'.
-CODE/VALUE is either a code that starts with '#' or a key symbol.
+E.g. control-#1 or control-a.
 
 Note that '-' or '#' as a last character is supported, e.g. 'control--' and
 'control-#' are valid."
@@ -203,11 +204,11 @@ When no binding is found, call this function to
 generate new bindings to lookup.  The function takes a list of `key' objects and
 returns a list of list of keys.
 
-Ths parameter can be let-bound around `lookup-key' calls.")
+This parameter can be let-bound around `lookup-key' calls.")
 
 (defparameter *default-bound-type* '(or keymap t)
   "Default value for the `bound-type' slot of `keymap'.
-Do not change this, instead create new `scheme-name's or subclass `keymap'.")
+Do not change this, instead create new a `keyscheme' or subclass `keymap'.")
 
 (defclass keymap ()
   ((name :accessor name
@@ -526,7 +527,7 @@ And so on if the binding is still not found."
 (defun key->keyspec (key)
   "Return the keyspec of KEY.
 If the key has a code, return it prefixed with '#'.
-For now the status is not encoded in the keyspec, this may change in the future."
+The status is not encoded in the keyspec, but this may change in the future."
   (let ((value (if (zerop (key-code key))
                    (key-value key)
                    (format nil "#~a" (key-code key))))
