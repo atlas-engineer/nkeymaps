@@ -6,7 +6,7 @@
 (defun empty-keymap (&rest parents)
   (apply #'nkeymaps:make-keymap "anonymous" parents))
 
-(define-test make-key ()
+(define-test make-key (:contexts 'with-emacs-keyspec-context)
   "Make key."
   (let* ((key (nkeymaps:make-key :code 38 :value "a" :modifiers '("C")))
          (mod (first (fset:convert 'list (nkeymaps:key-modifiers key)))))
@@ -21,7 +21,7 @@
     (assert-false (nkeymaps:modifier= "M" mod))
     (assert-false (nkeymaps:modifier= "meta" mod))))
 
-(define-test make-bad-key ()
+(define-test make-bad-key (:contexts 'with-emacs-keyspec-context)
   "Make bad key."
   #-(or clisp allegro lispworks)
   (assert-error 'type-error
@@ -31,7 +31,7 @@
   (assert-error 'nkeymaps:make-key-required-arg
                 (nkeymaps:make-key :status :pressed)))
 
-(define-test define-key-type-catching ()
+(define-test define-key-type-catching (:contexts 'with-emacs-keyspec-context)
   "Catch bad keyspecs."
   (let ((form '(lambda ()
                 (let ((keymap (nkeymaps:make-keymap "anonymous")))
@@ -39,7 +39,7 @@
     (assert-true (nth-value 2 (compile nil form)))
     (assert-warning 'warning (compile nil form))))
 
-(define-test make-same-key ()
+(define-test make-same-key (:contexts 'with-emacs-keyspec-context)
   "Make same key."
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "a" :modifiers '("M" "C"))
@@ -48,18 +48,18 @@
                    (nkeymaps:make-key :value "a" :modifiers '("control"))
                    (nkeymaps:make-key :value "a" :modifiers '("C"))))
 
-(define-test make-key-with-duplicate-modifiers ()
+(define-test make-key-with-duplicate-modifiers (:contexts 'with-emacs-keyspec-context)
   "Make key with duplicate modifiers (trigger warning)."
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "a" :modifiers '("C"))
                    (nkeymaps:make-key :value "a" :modifiers '("C" "control"))))
 
-(define-test make-different-key ()
+(define-test make-different-key (:contexts 'with-emacs-keyspec-context)
   "Make different key."
   (assert-false (nkeymaps:key= (nkeymaps:make-key :value "a")
                                (nkeymaps:make-key :value "A"))))
 
-(define-test keyspec->key ()
+(define-test keyspec->key (:contexts 'with-emacs-keyspec-context)
   "Keyspec->key."
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "a")
@@ -98,7 +98,7 @@
 (defun binding= (keys1 keys2)
   (not (position nil (mapcar #'nkeymaps:key= keys1 keys2))))
 
-(define-test keyspecs->keys ()
+(define-test keyspecs->keys (:contexts 'with-emacs-keyspec-context)
   "Keyspecs->keys."
   (assert-equality #'binding=
                    (list (nkeymaps:make-key :value "x" :modifiers '("C"))
@@ -109,7 +109,7 @@
                          (nkeymaps:make-key :value "f" :modifiers '("C")))
                    (nkeymaps/core::keyspecs->keys "  C-x   C-f  ")))
 
-(define-test define-key-lookup-key ()
+(define-test define-key-lookup-key (:contexts 'with-emacs-keyspec-context)
   "define-key & lookup-key."
   (let ((keymap (empty-keymap)))
     (nkeymaps:define-key keymap "C-x" 'foo)
@@ -125,7 +125,7 @@
     (assert-eql 'bar2
                 (nkeymaps:lookup-key "C-c C-h" keymap))))
 
-(define-test define-key-type-error ()
+(define-test define-key-type-error (:contexts 'with-emacs-keyspec-context)
   "define-key type error."
   (let ((keymap (empty-keymap)))
     (setf (nkeymaps:bound-type keymap) '(or nkeymaps::keymap function))
@@ -134,7 +134,7 @@
     (assert-error 'type-error
                   (nkeymaps:define-key keymap "C-c" 'append))))
 
-(define-test define-key-multiple-bindings ()
+(define-test define-key-multiple-bindings (:contexts 'with-emacs-keyspec-context)
   "define-key & multiple bindings."
   (let ((keymap (empty-keymap)))
     (nkeymaps:define-key keymap
@@ -145,7 +145,7 @@
     (assert-eql 'bar
                 (nkeymaps:lookup-key "C-c" keymap))))
 
-(define-test define-key-lookup-key-parents ()
+(define-test define-key-lookup-key-parents (:contexts 'with-emacs-keyspec-context)
   "define-key & lookup-key with parents."
   (let* ((parent1 (empty-keymap))
          (parent2 (empty-keymap))
@@ -161,7 +161,7 @@
     (assert-eql 'parent2-b
                 (nkeymaps:lookup-key "b" keymap))))
 
-(define-test define-key-lookup-key-prefix-keymap ()
+(define-test define-key-lookup-key-prefix-keymap (:contexts 'with-emacs-keyspec-context)
   "define-key & lookup-key with prefix keymap."
   (let ((keymap (empty-keymap))
         (prefix (empty-keymap)))
@@ -170,7 +170,7 @@
     (assert-eql 'prefix-sym
                 (nkeymaps:lookup-key "C-c x" keymap))))
 
-(define-test define-key-lookup-key-cycle ()
+(define-test define-key-lookup-key-cycle (:contexts 'with-emacs-keyspec-context)
   "define-key & lookup-key with cycle."
   (let ((keymap (empty-keymap))
         (parent1 (empty-keymap))
@@ -181,7 +181,7 @@
     (assert-warning 'nkeymaps:cycle
                     (nkeymaps:lookup-key "x" keymap))))
 
-(define-test translator ()
+(define-test translator (:contexts 'with-emacs-keyspec-context)
   "Translator."
   (let ((keymap (empty-keymap)))
     (nkeymaps:define-key keymap "A b" 'foo)
@@ -203,7 +203,7 @@
     (assert-eql 'ret
                 (nkeymaps:lookup-key "shift-return" keymap))))
 
-(define-test translator-priority ()
+(define-test translator-priority (:contexts 'with-emacs-keyspec-context)
   "Translator: Ensure other keymaps have priority over translations."
   (let ((keymap (empty-keymap))
         (keymap2 (empty-keymap)))
@@ -212,7 +212,7 @@
     (assert-eql 'up-g
                 (nkeymaps:lookup-key "s-G" (list keymap keymap2)))))
 
-(define-test keys->keyspecs ()
+(define-test keys->keyspecs (:contexts 'with-emacs-keyspec-context)
   "keys->keyspecs."
   (assert-equal "#10"
                 (nkeymaps:keys->keyspecs (list (nkeymaps:make-key :code 10 :value "a"))))
@@ -241,7 +241,7 @@
                                                   :modifiers '(#+darwin "control"
                                                                #-darwin "Ctrl")))))))
 
-(define-test keymap->map ()
+(define-test keymap->map (:contexts 'with-emacs-keyspec-context)
   "keymap->map."
   (let ((keymap (empty-keymap))
         (keymap2 (empty-keymap)))
@@ -271,7 +271,7 @@
                                ("k c" 'bar-c))
                      (fset:convert 'fset:map (nkeymaps:keymap->map keymap2 keymap)))))
 
-(define-test keymap->map-cycles ()      ; TODO: Can we check warnings?
+(define-test keymap->map-cycles (:contexts 'with-emacs-keyspec-context)      ; TODO: Can we check (:contexts 'with-emacs-keyspec-context)
   "keymap->map with cycles."
   (let ((keymap (empty-keymap))
         (keymap2 (empty-keymap)))
@@ -290,7 +290,7 @@
                      (fset:empty-map)
                      (fset:convert 'fset:map (nkeymaps:keymap->map keymap)))))
 
-(define-test keymap-with-parents->map ()
+(define-test keymap-with-parents->map (:contexts 'with-emacs-keyspec-context)
   "keymap-with-parents->map."
   (let* ((grand-parent (empty-keymap))
          (parent1 (empty-keymap))
@@ -328,7 +328,7 @@
                                ("d" 'qux-d))
                      (fset:convert 'fset:map (nkeymaps:keymap-with-parents->map keymap)))))
 
-(define-test keymap-with-parents->map-cycles () ; TODO: Can we check warnings?
+(define-test keymap-with-parents->map-cycles (:contexts 'with-emacs-keyspec-context) ; TODO: Can we check (:contexts 'with-emacs-keyspec-context)
   "keymap-with-parents->map with cycles."
   (let ((keymap1 (empty-keymap))
         (keymap2 (empty-keymap)))
@@ -347,7 +347,7 @@
                      (fset:empty-map)
                      (fset:convert 'fset:map (nkeymaps:keymap-with-parents->map keymap1)))))
 
-(define-test compose-keymaps ()
+(define-test compose-keymaps (:contexts 'with-emacs-keyspec-context)
   "compose-keymaps."
   (let* ((parent1 (empty-keymap))
          (keymap1 (nkeymaps:make-keymap "1" parent1))
@@ -373,7 +373,7 @@
       (assert-equal (list parent1 parent2)
                     (nkeymaps:parents composition)))))
 
-(define-test compose ()
+(define-test compose (:contexts 'with-emacs-keyspec-context)
   "compose: Altering source does not impact composition."
   (let* ((keymap1 (nkeymaps:make-keymap "1"))
          (keymap2 nil))
@@ -386,7 +386,7 @@
                       ("a" 'foo-a))
                      (fset:convert 'fset:map (nkeymaps:keymap->map keymap2)))))
 
-(define-test binding-keys ()
+(define-test binding-keys (:contexts 'with-emacs-keyspec-context)
   "binding-keys."
   (let* ((keymap1 (empty-keymap))
          (keymap2 (empty-keymap))
@@ -444,7 +444,7 @@
                           `(("C-c a" ,keymap1)))
                   (nkeymaps:binding-keys 'foo-a keymap3))))
 
-(define-test undefine ()
+(define-test undefine (:contexts 'with-emacs-keyspec-context)
   "undefine."
   (let* ((keymap (empty-keymap)))
     (nkeymaps:define-key keymap "a" 'foo-a)
@@ -458,7 +458,7 @@
                      (fset:empty-map)
                      (nkeymaps/core::entries keymap))))
 
-(define-test remap ()
+(define-test remap (:contexts 'with-emacs-keyspec-context)
   "remap."
   (let* ((keymap (empty-keymap))
          (keymap2 (empty-keymap)))
@@ -471,7 +471,7 @@
     (assert-eql 'bar-2
                 (nkeymaps:lookup-key "b" keymap))))
 
-(define-test retrieve-translated-key ()
+(define-test retrieve-translated-key (:contexts 'with-emacs-keyspec-context)
   "retrieve translated key."
   (let* ((keymap (empty-keymap)))
     (nkeymaps:define-key keymap "a" 'foo-a)
@@ -481,7 +481,7 @@
       (assert-eql keymap km)
       (assert-equal "a" (nkeymaps:keys->keyspecs key)))))
 
-(define-test do-not-shadow-prefix-keymap ()
+(define-test do-not-shadow-prefix-keymap (:contexts 'with-emacs-keyspec-context)
   "Don't shadow a prefix keymap."
   (let* ((parent (empty-keymap))
          (keymap (empty-keymap parent)))

@@ -3,7 +3,7 @@
 
 (in-package :nkeymaps/tests)
 
-(define-test make-keyscheme ()
+(define-test make-keyscheme (:contexts 'with-emacs-keyspec-context)
   "Make keyscheme."
   (let* ((keyscheme-map (nkeymaps:define-keyscheme-map "test" ()
                           nkeymaps:cua '("C-c" copy
@@ -17,7 +17,7 @@
     (assert-equal (nkeymaps:name keymap)
                   (nkeymaps:name (gethash nkeymaps:cua keyscheme-map)))))
 
-(define-test make-keyscheme-map ()
+(define-test make-keyscheme-map (:contexts 'with-emacs-keyspec-context)
   "Make keyscheme-map with `list'."
   (let* ((keyscheme-map (nkeymaps:define-keyscheme-map "test" ()
                           nkeymaps:cua (list "C-c" 'copy
@@ -30,7 +30,7 @@
                      (fset:convert 'fset:map (nkeymaps:keymap->map keymap))
                      (fset:convert 'fset:map (nkeymaps:keymap->map (gethash nkeymaps:cua keyscheme-map))))))
 
-(define-test make-schsme-with-multiple-names ()
+(define-test make-schsme-with-multiple-names (:contexts 'with-emacs-keyspec-context)
   "Make scheme with multiple names"
   (let* ((keyscheme-map (nkeymaps:define-keyscheme-map "test" ()
                           nkeymaps:cua (list "C-c" 'copy
@@ -52,7 +52,7 @@
                      (fset:convert 'fset:map (nkeymaps:keymap->map emacs-keymap))
                      (fset:convert 'fset:map (nkeymaps:keymap->map (gethash nkeymaps:emacs keyscheme-map))))))
 
-(define-test inheritance ()
+(define-test inheritance (:contexts 'with-emacs-keyspec-context)
   "Test inheritance."
   (let* ((keyscheme-map (nkeymaps:define-keyscheme-map "test" ()
                           nkeymaps:default (list "C-c" 'copy
@@ -70,7 +70,7 @@
     (assert-equal (nkeymaps:parents (gethash nkeymaps:emacs keyscheme-map))
                   (list (gethash nkeymaps:default keyscheme-map)))))
 
-(define-test get-keymap ()
+(define-test get-keymap (:contexts 'with-emacs-keyspec-context)
   "Get keymap."
   (let* ((keyscheme-map (nkeymaps:define-keyscheme-map "test" ()
                           nkeymaps:default (list "C-c" 'copy
@@ -84,7 +84,7 @@
     (assert-equal (nkeymaps:get-keymap nkeymaps:default keyscheme-map)
                   (nkeymaps:get-keymap nkeymaps:vi-normal keyscheme-map))))
 
-(define-test prioritize-scheme-over-parent ()
+(define-test prioritize-scheme-over-parent (:contexts 'with-emacs-keyspec-context)
   "Prioritize scheme over parent."
   (let* ((keyscheme-map1 (nkeymaps:define-keyscheme-map "test1" ()
                            nkeymaps:cua (list "C-c" 'do-not-hit-me)
@@ -97,7 +97,7 @@
       (assert-eql 'hit-me
                   (nkeymaps:lookup-key "C-c" keymaps)))))
 
-(define-test custom-modifiers ()
+(define-test custom-modifiers (:contexts 'with-emacs-keyspec-context)
   "Define scheme with custom modifiers."
   (let* ((+custom+ (make-instance 'nkeymaps:keyscheme
                                   :name "custom"
@@ -119,7 +119,7 @@
       (assert-error 'nkeymaps/conditions:bad-modifier
                     (nkeymaps:lookup-key "M-c" keymap)))))
 
-(define-test imported-keyscheme-map ()
+(define-test imported-keyscheme-map (:contexts 'with-emacs-keyspec-context)
   "Define scheme with custom modifiers."
   (let* ((imported-map (nkeymaps:define-keyscheme-map "imported" ()
                          nkeymaps:default (list
@@ -144,7 +144,7 @@
       (assert-eql 'do-not-forward-me (nkeymaps:lookup-key "M-c" imported-keymap))
       (assert-eql 'hit-me (nkeymaps:lookup-key "M-c" new-keymap)))))
 
-(define-test define-keyscheme-type-catching ()
+(define-test define-keyscheme-type-catching (:contexts 'with-emacs-keyspec-context)
   "Catch bad keyspecs."
   (let ((form '(lambda ()
                 (nkeymaps:define-keyscheme-map "foo" ()
