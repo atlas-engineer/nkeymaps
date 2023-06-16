@@ -511,7 +511,7 @@ And so on if the binding is still not found."
                                      keys)))))
     (values result matching-keymap matching-key)))
 
-(defparameter *print-keyspec-style* "emacs"
+(defparameter *print-keyspec-style* "cua"
   "Define how modifiers are printed.
 
 Accepted values:
