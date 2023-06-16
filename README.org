@@ -35,7 +35,7 @@ The main types are:
   easier than looping through all keymaps to change them.
 - Translate keyspecs as a fallback.  For instance if =shift-a= is unbound, check
   =A=.
-- Customizable behaviour with global parameters such as ~*print-shortcut*~.
+- Customizable behaviour with global parameters such as ~*print-keyspec-style*~.
 - Merge multiple keymaps via ~compose~.
 - Handle gracefully multiple arguments when sensible (e.g. multiple keymaps for
   ~lookup-key~).
