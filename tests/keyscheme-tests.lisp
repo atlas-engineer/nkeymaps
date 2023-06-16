@@ -103,7 +103,9 @@
                                   :name "custom"
                                   :modifiers (fset:set
                                               nkeymaps:+control+
-                                              (nkeymaps:define-modifier :string "duper" :shortcut "D"))))
+                                              (nkeymaps:define-modifier
+                                                  :string "duper"
+                                                  :shortcut-emacs "D"))))
          (keyscheme-map (nkeymaps:define-keyscheme-map "test" ()
                           +custom+ (list
                                     "D-c" 'hit-me

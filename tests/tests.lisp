@@ -228,9 +228,18 @@
   (assert-equal "C-M-a H-S-x"
                 (nkeymaps:keys->keyspecs (list (nkeymaps:make-key :value "a" :modifiers '("C" "M"))
                                                (nkeymaps:make-key :value "x" :modifiers '("super" "hyper")))))
-  (let ((nkeymaps:*print-shortcut* nil))
+  (let ((nkeymaps:*print-keyspec-style* :no-shortcuts))
     (assert-equal "control-a"
-                  (nkeymaps:keys->keyspecs (list (nkeymaps:make-key :value "a" :modifiers '("C")))))))
+                  (nkeymaps:keys->keyspecs (list (nkeymaps:make-key
+                                                  :value "a"
+                                                  :modifiers '("C"))))))
+  (let ((nkeymaps:*print-keyspec-style* :cua))
+    (assert-equal #+darwin "control-a"
+                  #-darwin "Ctrl-a"
+                  (nkeymaps:keys->keyspecs (list (nkeymaps:make-key
+                                                  :value "a"
+                                                  :modifiers '(#+darwin "control"
+                                                               #-darwin "Ctrl")))))))
 
 (define-test keymap->map ()
   "keymap->map."
