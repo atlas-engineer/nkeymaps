@@ -511,13 +511,13 @@ And so on if the binding is still not found."
                                      keys)))))
     (values result matching-keymap matching-key)))
 
-(defparameter *print-keyspec-style* :emacs
+(defparameter *print-keyspec-style* "emacs"
   "Define how modifiers are printed.
 
 Accepted values:
-:no-shortcuts - print according to `modifier-string';
-:emacs - print according to `modifier-shortcut-emacs';
-:cua - print according to `modifier-shortcut-cua'.")
+\"no-shortcuts\" - print according to `modifier-string';
+\"emacs\" - print according to `modifier-shortcut-emacs';
+\"cua\" - print according to `modifier-shortcut-cua'.")
 
 (defun string-join (strings separator &key end)
   "Adapted from `serapeum:string-join'."
@@ -542,11 +542,11 @@ The status is not encoded in the keyspec, but this may change in the future."
                    (format nil "#~a" (key-code key))))
         (modifiers (fset:reduce (lambda (&rest mods) (string-join mods "-"))
                                 (key-modifiers key)
-                                :key (case *print-keyspec-style*
-                                       (:no-shortcuts #'modifier-string)
-                                       (:emacs #'modifier-shortcut-emacs)
-                                       (:cua #'modifier-shortcut-cua)
-                                       (otherwise #'modifier-shortcut-emacs)))))
+                                :key (alex:switch (*print-keyspec-style* :test #'string=)
+                                       ("no-shortcuts" #'modifier-string)
+                                       ("emacs" #'modifier-shortcut-emacs)
+                                       ("cua" #'modifier-shortcut-cua)
+                                       (t #'modifier-shortcut-emacs)))))
     (the (values keyspecs-type &optional)
          (uiop:strcat (if (uiop:emptyp modifiers) "" (uiop:strcat modifiers "-"))
                       value))))

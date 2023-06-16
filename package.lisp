@@ -161,7 +161,7 @@ Some globals can be tweaked to customize the library to your needs:
 - `nkeymaps:*translator*': The function to infer the right binding when the
   exact binding hits nothing.
 - `nkeymaps:*print-keyspec-style*': Dictates how modifiers are printed.
-  Possible values are `:no-shortcuts', `:emacs' and `:cua'.
+  Possible values are \"no-shortcuts\", \":emacs\" and \":cua\".
   E.g. `nkeymaps/modifier:+control+' may be printed as \"control\", \"C\", or
   \"Ctrl\", respectively for the values above."))
 
