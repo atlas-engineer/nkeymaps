@@ -34,7 +34,7 @@
 
    #:*translator*
 
-   #:*print-shortcut*
+   #:*print-keyspec-style*
    #:keys->keyspecs
 
    #:keymap->map
@@ -158,10 +158,12 @@ New modifiers can be defined with `nkeymaps:define-modifier'.
 
 Some globals can be tweaked to customize the library to your needs:
 
-- `nkeymaps:*translator*': The function to infer the right binding when
-  the exact binding hits nothing.
-- `nkeymaps:*print-shortcut*': Print modifiers using their short form instead of the
-  full name, e.g. \"C\" instead of \"control\"."))
+- `nkeymaps:*translator*': The function to infer the right binding when the
+  exact binding hits nothing.
+- `nkeymaps:*print-keyspec-style*': Dictates how modifiers are printed.
+  Possible values are `:no-shortcuts', `:emacs' and `:cua'.
+  E.g. `nkeymaps/modifier:+control+' may be printed as \"control\", \"C\", or
+  \"Ctrl\", respectively for the values above."))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (trivial-package-local-nicknames:add-package-local-nickname :alex :alexandria :nkeymaps/core)
