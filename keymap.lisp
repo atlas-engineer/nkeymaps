@@ -9,6 +9,39 @@
   (string "" :type string)
   (shortcut "" :type string))
 
+(defparameter *modifier-printer*
+  (defun print-modifier-default (modifier stream)
+    (format stream (modifier-string modifier)))
+  "TODO")
+
+(defmethod print-object ((modifier modifier) stream)
+  (funcall *modifier-printer* modifier stream))
+
+(defun print-modifier-cua (modifier stream)
+  (format stream
+          (alex:switch (modifier :key #'modifier-string :test #'string=)
+            ("control"
+             #+darwin "control"
+             #-darwin "Ctrl")
+            ("meta"
+             #+darwin "option"
+             #-darwin "Alt")
+            ("shift"
+             #+darwin "shift"
+             #-darwin "Shift")
+            ("super"
+             #+darwin "command"
+             #+win32 "Win"
+             #+linux "Super"))))
+
+(defun print-modifier-emacs (modifier stream)
+  (format stream
+          (alex:switch (modifier :key #'modifier-string :test #'string=)
+            ("control" "C")
+            ("meta" "M")
+            ("shift" "s")
+            ("super" "S"))))
+
 (declaim (ftype (function ((or string modifier) (or string modifier)) boolean) modifier=))
 (defun modifier= (string-or-modifier1 string-or-modifier2)
   "Return non-nil if STRING-OR-MODIFIER1 and STRING-OR-MODIFIER2 represent the same modifier."
@@ -533,9 +566,7 @@ The status is not encoded in the keyspec, but this may change in the future."
                    (format nil "#~a" (key-code key))))
         (modifiers (fset:reduce (lambda (&rest mods) (string-join mods "-"))
                                 (key-modifiers key)
-                                :key (if *print-shortcut*
-                                         #'modifier-shortcut
-                                         #'modifier-string))))
+                                :key #'prin1-to-string)))
     (the (values keyspecs-type &optional)
          (uiop:strcat (if (uiop:emptyp modifiers) "" (uiop:strcat modifiers "-"))
                       value))))
@@ -683,3 +714,28 @@ For instance, to list all keymaps that have a binding, call:
     (values
      (mapcar #'first alist)
      alist)))
+
+;; Doubt:
+;; (let ((*modifier-printer* #'print-modifier-cua)) +control+) => control
+;; but,
+;; (progn (setf *modifier-printer* #'print-modifier-cua) +control+) => Ctrl
+
+;; Obviously, the following works as expected:
+;; (let ((*modifier-printer* #'print-modifier-cua)) (prin1-to-string +control+)) => "Ctrl"
+
+;; Tests:
+;; (let ((keymap (nkeymaps:make-keymap "keymap")))
+;;   (nkeymaps:define-key keymap
+;;     "C-M-s-S-c C-M-s-S-d" 'foo-emacs
+;;     "control-meta-shift-super-e control-meta-shift-super-f" 'foo-no-shortcuts)
+;;   (setf *modifier-printer* #'print-modifier-default)
+;;   (print (first (nkeymaps:binding-keys 'foo-emacs keymap)))
+;;   (print (first (nkeymaps:binding-keys 'foo-no-shortcuts keymap)))
+
+;;   (setf *modifier-printer* #'print-modifier-cua)
+;;   (print (first (nkeymaps:binding-keys 'foo-emacs keymap)))
+;;   (print (first (nkeymaps:binding-keys 'foo-no-shortcuts keymap)))
+
+;;   (setf *modifier-printer* #'print-modifier-emacs)
+;;   (print (first (nkeymaps:binding-keys 'foo-emacs keymap)))
+;;   (print (first (nkeymaps:binding-keys 'foo-no-shortcuts keymap))))

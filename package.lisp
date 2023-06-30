@@ -35,6 +35,11 @@
    #:*translator*
 
    #:*print-shortcut*
+   #:*modifier-printer*
+   #:print-modifier-cua
+   #:print-modifier-emacs
+   #:print-modifier-default
+
    #:keys->keyspecs
 
    #:keymap->map
