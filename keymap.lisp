@@ -7,7 +7,8 @@
 
 (defstruct modifier
   (string "" :type string)
-  (shortcut "" :type string))
+  (shortcut "" :type string)
+  (system-name "" :type string))
 
 (declaim (ftype (function ((or string modifier) (or string modifier)) boolean) modifier=))
 (defun modifier= (string-or-modifier1 string-or-modifier2)
@@ -17,7 +18,8 @@
     (error 'bad-modifier :message "At least one of the arguments must be a modifier."))
   (flet ((match-modifier (modifier string)
            (or (string= (modifier-string modifier) string)
-               (string= (modifier-shortcut modifier) string))))
+               (string= (modifier-shortcut modifier) string)
+               (string= (modifier-system-name modifier) string))))
     (cond
       ((stringp string-or-modifier1)
        (match-modifier string-or-modifier2 string-or-modifier1))
@@ -27,7 +29,9 @@
        (or (string= (modifier-string string-or-modifier1)
                     (modifier-string string-or-modifier2))
            (string= (modifier-shortcut string-or-modifier1)
-                    (modifier-shortcut string-or-modifier2)))))))
+                    (modifier-shortcut string-or-modifier2))
+           (string= (modifier-system-name string-or-modifier1)
+                    (modifier-system-name string-or-modifier2)))))))
 
 (defmethod fset:compare ((x modifier) (y modifier))
   "Modifier sets need this comparison function to be ordered, so that (\"C\"
@@ -39,11 +43,11 @@
 `make-key' and `define-key' raise an error when setting a modifier that is not
 in this list.")
 
-(defun define-modifier (&rest args &key string shortcut)
+(defun define-modifier (&rest args &key string shortcut system-name)
   "Return a new modifier.
 It is registered globally and can be used from any new keymap, unless the keymap
 filters out the modifier in its `modifiers' slot."
-  (declare (ignore string shortcut))
+  (declare (ignore string shortcut system-name))
   (let ((result (apply #'make-modifier args)))
     (setf *modifier-list* (delete result *modifier-list*
                                   :test #'modifier=))
@@ -508,7 +512,13 @@ And so on if the binding is still not found."
     (values result matching-keymap matching-key)))
 
 (defparameter *print-shortcut* t
-  "Whether to print the short form of the modifiers.")
+  "Define how modifiers are represented in keyspecs.
+
+Accepted values:
+t, follows the string representation dictated by `modifier-shortcut';
+nil, follows the string representation dictated by `modifier-string';
+\"cua\", follows the string representation dictated by `modifier-system-name'.
+else, follows the string representation dictated by `modifier-shortcut'.")
 
 (defun string-join (strings separator &key end)
   "Adapted from `serapeum:string-join'."
@@ -533,9 +543,14 @@ The status is not encoded in the keyspec, but this may change in the future."
                    (format nil "#~a" (key-code key))))
         (modifiers (fset:reduce (lambda (&rest mods) (string-join mods "-"))
                                 (key-modifiers key)
-                                :key (if *print-shortcut*
-                                         #'modifier-shortcut
-                                         #'modifier-string))))
+                                :key (cond ((null *print-shortcut*)
+                                            #'modifier-string)
+                                           ((and (typep *print-shortcut* 'boolean)
+                                                 *print-shortcut*)
+                                            #'modifier-shortcut)
+                                           ((string-equal *print-shortcut* "cua")
+                                            #'modifier-system-name)
+                                           (t #'modifier-shortcut)))))
     (the (values keyspecs-type &optional)
          (uiop:strcat (if (uiop:emptyp modifiers) "" (uiop:strcat modifiers "-"))
                       value))))

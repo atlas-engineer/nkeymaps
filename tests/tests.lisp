@@ -483,3 +483,41 @@
     (assert-false (nkeymaps:lookup-key "C-x C-f" parent))
     (assert-eql 'parent-x
                 (nkeymaps:lookup-key "C-x" parent))))
+
+(define-test cua-modifiers (:contexts 'cua-modifiers)
+  (let* ((key (nkeymaps:make-key :code 38 :value "a" :modifiers '("C")))
+         (mod (first (fset:convert 'list (nkeymaps:key-modifiers key)))))
+    (assert-equality #'nkeymaps:modifier= #+darwin "control" #-darwin "Ctrl" mod)
+    (assert-equality #'nkeymaps:modifier= "control" mod)
+    (assert-equality #'nkeymaps:modifier= "C" mod)
+    (assert-equality #'nkeymaps:modifier= nkeymaps:+control+ mod)
+    (assert-false (nkeymaps:modifier= "bogus" mod)))
+  (assert-equality #'nkeymaps:key=
+                   (nkeymaps:make-key
+                    :value "a"
+                    :modifiers '(#+darwin "control" #-darwin "Ctrl"
+                                 #+darwin "option" #-darwin "Alt"
+                                 #+darwin "shift" #-darwin "Shift"
+                                 #+darwin "command" #+win32 "Win" #+linux "Super"))
+                   (nkeymaps/core::keyspec->key "Ctrl-Alt-Shift-Super-a"))
+  (assert-equality #'binding=
+                   (list (nkeymaps:make-key
+                          :value "x"
+                          :modifiers '(#+darwin "control" #-darwin "Ctrl"
+                                       #+darwin "option" #-darwin "Alt"
+                                       #+darwin "shift" #-darwin "Shift"
+                                       #+darwin "command" #+win32 "Win" #+linux "Super"))
+                         (nkeymaps:make-key
+                          :value "f"
+                          :modifiers '(#+darwin "control" #-darwin "Ctrl"
+                                       #+darwin "option" #-darwin "Alt"
+                                       #+darwin "shift" #-darwin "Shift"
+                                       #+darwin "command" #+win32 "Win" #+linux "Super")))
+                   (nkeymaps/core::keyspecs->keys
+                    "Ctrl-Alt-Shift-Super-x Ctrl-Alt-Shift-Super-f"))
+  (assert-equal #+darwin "control-a"
+                #-darwin "Ctrl-a"
+                (nkeymaps:keys->keyspecs (list (nkeymaps:make-key
+                                                :value "a"
+                                                :modifiers '(#+darwin "control"
+                                                             #-darwin "Ctrl"))))))
