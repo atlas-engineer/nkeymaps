@@ -29,9 +29,7 @@
        (or (string= (modifier-string string-or-modifier1)
                     (modifier-string string-or-modifier2))
            (string= (modifier-shortcut string-or-modifier1)
-                    (modifier-shortcut string-or-modifier2))
-           (string= (modifier-system-name string-or-modifier1)
-                    (modifier-system-name string-or-modifier2)))))))
+                    (modifier-shortcut string-or-modifier2)))))))
 
 (defmethod fset:compare ((x modifier) (y modifier))
   "Modifier sets need this comparison function to be ordered, so that (\"C\"
