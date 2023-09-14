@@ -683,3 +683,31 @@ For instance, to list all keymaps that have a binding, call:
     (values
      (mapcar #'first alist)
      alist)))
+
+(defun pretty-binding-keys (bound-value keymap-or-keymaps &key (test #'eql) (print-style "cua"))
+  "Print the binding keys in a pretty manner.
+
+This violates the keyspec <-> key functional relationship, and should not be
+used for anything but rendering to the user."
+  (cond ((equal print-style "cua")
+         (mapcar
+          (lambda (i) (str:replace-using
+                       #+darwin
+                       '("C-" "Ctrl+"
+                         "s-" "Shift+"
+                         "M-" "Option+"
+                         "S-" "Command+")
+                       #+linux
+                       '("C-" "Ctrl+"
+                         "s-" "Shift+"
+                         "M-" "Alt+"
+                         "S-" "Super+")
+                       #+win32
+                       '("C-" "Ctrl+"
+                         "s-" "Shift+"
+                         "M-" "Alt+"
+                         "S-" "Win+")
+                       i))
+          (binding-keys bound-value keymap-or-keymaps :test test)))
+        (t
+         (binding-keys bound-value keymap-or-keymaps :test test))))

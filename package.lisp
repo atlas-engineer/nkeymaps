@@ -40,6 +40,7 @@
    #:keymap->map
    #:keymap-with-parents->map
    #:binding-keys
+   #:pretty-binding-keys
 
    #:compose
 
