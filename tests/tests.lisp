@@ -488,27 +488,16 @@
   (let* ((nkeymaps:*print-shortcut* "cua")
          (key (nkeymaps:make-key :code 38 :value "a" :modifiers '("C")))
          (mod (first (fset:convert 'list (nkeymaps:key-modifiers key)))))
-    (assert-false (nkeymaps:modifier= "bogus" mod)))
-  (assert-equality #'nkeymaps:key=
-                   (nkeymaps:make-key
-                    :value "a"
-                    :modifiers '("Ctrl"
-                                 "Alt"
-                                 "Shift"
-                                 "Super"))
-                   (nkeymaps/core::keyspec->key "Ctrl-Alt-Shift-Super-a"))
-  (assert-equality #'binding=
-                   (list (nkeymaps:make-key
-                          :value "x"
-                          :modifiers '("Ctrl"
-                                       "Alt"
-                                       "Shift"
-                                       "Super"))
-                         (nkeymaps:make-key
-                          :value "f"
-                          :modifiers '("Ctrl"
-                                       "Alt"
-                                       "Shift"
-                                       "Super")))
-                   (nkeymaps/core::keyspecs->keys
-                    "Ctrl-Alt-Shift-Super-x Ctrl-Alt-Shift-Super-f")))
+    (assert-false (nkeymaps:modifier= "bogus" mod))
+    (assert-string=
+     #+darwin
+     "control-option-shift-command-a"
+     #+linux
+     "Ctrl-Alt-Shift-Super-a"
+     (nkeymaps/core::key->keyspec
+      (nkeymaps:make-key
+       :value "a"
+       :modifiers '("control"
+                    "meta"
+                    "shift"
+                    "super"))))))
