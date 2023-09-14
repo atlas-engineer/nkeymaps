@@ -8,8 +8,3 @@
   (:import-from :nkeymaps))
 
 (in-package :nkeymaps/tests)
-
-(defun cua-modifiers (body-fn)
-  "A context that locally binds `nkeymaps:*print-shortcut*' to \"cua\"."
-  (let ((nkeymaps:*print-shortcut* "cua"))
-    (funcall body-fn)))
