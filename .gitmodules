@@ -38,3 +38,11 @@
 	path = _build/cl-unicode
 	url = https://github.com/edicl/cl-unicode
 	shallow = true
+[submodule "_build/cl-str"]
+	path = _build/cl-str
+	url = https://github.com/vindarel/cl-str
+	shallow = true
+[submodule "_build/cl-change-case"]
+	path = _build/cl-change-case
+	url = https://github.com/rudolfochrist/cl-change-case
+	shallow = true
