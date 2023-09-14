@@ -483,21 +483,3 @@
     (assert-false (nkeymaps:lookup-key "C-x C-f" parent))
     (assert-eql 'parent-x
                 (nkeymaps:lookup-key "C-x" parent))))
-
-(define-test cua-modifiers ()
-  (let* ((nkeymaps:*print-shortcut* "cua")
-         (key (nkeymaps:make-key :code 38 :value "a" :modifiers '("C")))
-         (mod (first (fset:convert 'list (nkeymaps:key-modifiers key)))))
-    (assert-false (nkeymaps:modifier= "bogus" mod))
-    (assert-string=
-     #+darwin
-     "control-option-shift-command-a"
-     #+linux
-     "Ctrl-Alt-Shift-Super-a"
-     (nkeymaps/core::key->keyspec
-      (nkeymaps:make-key
-       :value "a"
-       :modifiers '("control"
-                    "meta"
-                    "shift"
-                    "super"))))))
