@@ -18,8 +18,7 @@
     (error 'bad-modifier :message "At least one of the arguments must be a modifier."))
   (flet ((match-modifier (modifier string)
            (or (string= (modifier-string modifier) string)
-               (string= (modifier-shortcut modifier) string)
-               (string= (modifier-system-name modifier) string))))
+               (string= (modifier-shortcut modifier) string))))
     (cond
       ((stringp string-or-modifier1)
        (match-modifier string-or-modifier2 string-or-modifier1))
@@ -549,9 +548,8 @@ The status is not encoded in the keyspec, but this may change in the future."
                                            ((string-equal *print-shortcut* "cua")
                                             #'modifier-system-name)
                                            (t #'modifier-shortcut)))))
-    (the (values keyspecs-type &optional)
-         (uiop:strcat (if (uiop:emptyp modifiers) "" (uiop:strcat modifiers "-"))
-                      value))))
+    (uiop:strcat (if (uiop:emptyp modifiers) "" (uiop:strcat modifiers "-"))
+                 value)))
 
 (declaim (ftype (function ((list-of key)) keyspecs-type) keys->keyspecs))
 (defun keys->keyspecs (keys)
