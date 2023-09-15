@@ -95,6 +95,13 @@ stand for it, or "New", or whatever poetic meaning you may find behind it!
 
 ** Change log
 
+*** 1.1.0
+- New =pretty-binding-keys= function that prints keybindings using OS-dependent
+  modifier terminology.
+- Improve documentation.
+- Add =NASDF= as a dependency.
+- Add =cl-str= as a dependency.
+
 *** 1.0.0
 
 - Renamed =scheme-name= to =keyscheme= and =scheme= to =keyscheme-map=.  It's
