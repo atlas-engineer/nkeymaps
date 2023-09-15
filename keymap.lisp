@@ -690,17 +690,18 @@ For instance, to list all keymaps that have a binding, call:
 This violates the keyspec <-> key functional relationship, and should not be
 used for anything but rendering to the user."
   (cond ((equal print-style "cua")
-         (mapcar
-          (lambda (i)
-            (str:replace-all
-             "M-" #+linux "Alt+" #+darwin "Option+" #+win32 "Alt+"
-             (str:replace-all
-              "S-" #+linux "Super+" #+darwin "Command+" #+win32 "Win+"
+         (let ((*print-shortcut* t))
+           (mapcar
+            (lambda (i)
               (str:replace-all
-               "s-" #+linux "Shift+" #+darwin "Shift+" #+win32 "Shift+"
+               "M-" #+linux "Alt+" #+darwin "Option+" #+win32 "Alt+"
                (str:replace-all
-                "C-" #+linux "Ctrl+" #+darwin "Ctrl+" #+win32 "Ctrl+"
-                i)))))
-          (binding-keys bound-value keymap-or-keymaps :test test)))
+                "S-" #+linux "Super+" #+darwin "Command+" #+win32 "Win+"
+                (str:replace-all
+                 "s-" #+linux "Shift+" #+darwin "Shift+" #+win32 "Shift+"
+                 (str:replace-all
+                  "C-" #+linux "Ctrl+" #+darwin "Ctrl+" #+win32 "Ctrl+"
+                  i)))))
+            (binding-keys bound-value keymap-or-keymaps :test test))))
         (t
          (binding-keys bound-value keymap-or-keymaps :test test))))
