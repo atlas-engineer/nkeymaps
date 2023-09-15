@@ -691,23 +691,16 @@ This violates the keyspec <-> key functional relationship, and should not be
 used for anything but rendering to the user."
   (cond ((equal print-style "cua")
          (mapcar
-          (lambda (i) (str:replace-using
-                       #+darwin
-                       '("C-" "Ctrl+"
-                         "s-" "Shift+"
-                         "M-" "Option+"
-                         "S-" "Command+")
-                       #+linux
-                       '("C-" "Ctrl+"
-                         "s-" "Shift+"
-                         "M-" "Alt+"
-                         "S-" "Super+")
-                       #+win32
-                       '("C-" "Ctrl+"
-                         "s-" "Shift+"
-                         "M-" "Alt+"
-                         "S-" "Win+")
-                       i))
+          (lambda (i)
+            (str:replace-all
+             "M-" #+linux "Alt+" #+darwin "Option+" #+win32 "Alt+"
+             (str:replace-all
+              "S-" #+linux "Super+" #+darwin "Command+" #+win32 "Win+"
+              (str:replace-all
+               "s-" #+linux "Shift+" #+darwin "Shift+" #+win32 "Shift+"
+               (str:replace-all
+                "C-" #+linux "Ctrl+" #+darwin "Ctrl+" #+win32 "Ctrl+"
+                i)))))
           (binding-keys bound-value keymap-or-keymaps :test test)))
         (t
          (binding-keys bound-value keymap-or-keymaps :test test))))
