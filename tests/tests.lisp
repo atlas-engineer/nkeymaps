@@ -483,3 +483,16 @@
     (assert-false (nkeymaps:lookup-key "C-x C-f" parent))
     (assert-eql 'parent-x
                 (nkeymaps:lookup-key "C-x" parent))))
+
+(define-test pretty-binding-keys-output ()
+  (let* ((keymap1 (empty-keymap)))
+    (nkeymaps:define-key keymap1 "C-M-s-S-a" 'foo-a)
+    #+linux
+    (assert-equal (list "Ctrl+Alt+Shift+Super+a")
+                  (nkeymaps:pretty-binding-keys 'foo-a keymap1 :print-style "cua"))
+    #+darwin
+    (assert-equal (list "Ctrl+Option+Shift+Command+a")
+                  (nkeymaps:pretty-binding-keys 'foo-a keymap1 :print-style "cua"))
+    #+win32
+    (assert-equal (list "Ctrl+Alt+Shift+Win+a")
+                  (nkeymaps:pretty-binding-keys 'foo-a keymap1 :print-style "cua"))))
