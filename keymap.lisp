@@ -694,13 +694,13 @@ used for anything but rendering to the user."
            (mapcar
             (lambda (i)
               (str:replace-all
-               "M-" #+linux "Alt+" #+darwin "Option+" #+win32 "Alt+"
+               "M-" #+darwin "Option+" #-darwin "Alt+"
                (str:replace-all
-                "S-" #+linux "Super+" #+darwin "Command+" #+win32 "Win+"
+                "S-" #+darwin "Command+" #+win32 "Win+" #-(or darwin win32) "Super+"
                 (str:replace-all
-                 "s-" #+linux "Shift+" #+darwin "Shift+" #+win32 "Shift+"
+                 "s-" "Shift+"
                  (str:replace-all
-                  "C-" #+linux "Ctrl+" #+darwin "Ctrl+" #+win32 "Ctrl+"
+                  "C-" "Ctrl+"
                   i)))))
             (binding-keys bound-value keymap-or-keymaps :test test))))
         (t
