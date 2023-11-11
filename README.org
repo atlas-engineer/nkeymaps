@@ -80,7 +80,7 @@ See the [[file:package.lisp][package]] documentation for a usage guide and more 
 
 ** History
 
-NKeymaps was originally developed for keymap management in [[https://nyxt.atlas.engineer][Nyxt]], so the "N" may
+NKeymaps was originally developed for keymap management in [[https://nyxt-browser.com][Nyxt]], so the "N" may
 stand for it, or "New", or whatever poetic meaning you may find behind it!
 
 ** Road-map
