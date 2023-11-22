@@ -19,29 +19,17 @@
                (:file "translators")
                (:file "keyscheme-map")
                (:file "keyschemes"))
-  :in-order-to ((test-op (test-op "nkeymaps/tests")
-                         (test-op "nkeymaps/tests/compilation"))))
-
-
-(defsystem "nkeymaps/submodules"
-  :defsystem-depends-on ("nasdf")
-  :class :nasdf-submodule-system)
+  :in-order-to ((test-op (test-op "nkeymaps/tests"))))
 
 (defsystem "nkeymaps/tests"
-  :defsystem-depends-on ("nasdf")
-  :class :nasdf-test-system
-  :depends-on ("nkeymaps")
-  :targets (:package :nkeymaps/tests)
+  :depends-on ("nkeymaps" "lisp-unit2")
   :serial t
   :pathname "tests/"
   :components ((:file "package")
                (:file "tests")
-               (:file "keyscheme-tests")))
-
-(defsystem "nkeymaps/tests/compilation"
-  :defsystem-depends-on ("nasdf")
-  :class :nasdf-compilation-test-system
-  :depends-on ("nkeymaps")
-  :packages (:nkeymaps :nkeymaps/translator :nkeymaps/modifier :nkeymaps/keyscheme :nkeymaps/core)
-  ;; Ignore struct accessors, since they have no docstring by default.
-  :undocumented-symbols-to-ignore (:key-value :key-modifiers :key-code :key-status))
+               (:file "keyscheme-tests"))
+  :perform (test-op (op c)
+                    (eval-input
+                     "(lisp-unit2:run-tests
+                       :package :nkeymaps/tests
+                       :run-contexts #'lisp-unit2:with-summary-context)")))
