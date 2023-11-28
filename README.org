@@ -95,6 +95,10 @@ stand for it, or "New", or whatever poetic meaning you may find behind it!
 
 ** Change log
 
+*** 1.1.1
+- Remove =NASDF= as a dependency.
+- Minor fix relative to =pretty-binding-keys=.
+
 *** 1.1.0
 - New =pretty-binding-keys= function that prints keybindings using OS-dependent
   modifier terminology.
