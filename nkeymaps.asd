@@ -2,7 +2,7 @@
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
 (defsystem "nkeymaps"
-  :version "1.1.0"
+  :version "1.1.1"
   :description "General-purpose keymap management à-la Emacs."
   :author "Atlas Engineer LLC"
   :homepage "https://github.com/atlas-engineer/nkeymaps"
