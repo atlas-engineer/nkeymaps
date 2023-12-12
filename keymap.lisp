@@ -71,8 +71,10 @@ specify a key-code binding."
   (and (or (and (not (zerop (key-code key1)))
                 (= (key-code key1)
                    (key-code key2)))
-           (string= (key-value key1)
-                    (key-value key2)))
+           (and
+            (not (uiop:emptyp (key-value key1)))
+            (string= (key-value key1)
+                     (key-value key2))))
        (fset:equal? (key-modifiers key1)
                     (key-modifiers key2))
        (eq (key-status key1)
