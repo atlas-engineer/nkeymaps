@@ -53,6 +53,10 @@ filters out the modifier in its `modifiers' slot."
 (deftype key-status-type ()
   `(member :pressed :released))
 
+(deftype modifier-list ()
+  "List of modifiers are sets: they are ordered and have no duplicates."
+  `fset:wb-set)
+
 ;; Must be a structure so that it can served as a key in a hash-table with
 ;; #'equalp tests.
 (defstruct (key (:constructor %make-key (code value modifiers status))
@@ -60,7 +64,7 @@ filters out the modifier in its `modifiers' slot."
   "The fundamental type to represent any input, be it keyboard, mouse or others."
   (code 0 :type integer) ; TODO: Can a keycode be 0?  I think not, so 0 might be a good non-value.
   (value "" :type string)
-  (modifiers (fset:set) :type fset:wb-set)
+  (modifiers (fset:set) :type modifier-list)
   (status :pressed :type key-status-type))
 
 (defun key= (key1 key2)
@@ -91,17 +95,18 @@ specify a key-code binding."
                    :message (format nil "Unknown modifier ~a" string-or-modifier))))))
 
 (declaim (ftype (function ((or (list-of string)
-                               fset:wb-set))
-                          fset:wb-set)
+                               (list-of modifier)
+                               modifier-list))
+                          modifier-list)
                 modspecs->modifiers))
 (defun modspecs->modifiers (strings-or-modifiers)
   "Return the list of `modifier's corresponding to STRINGS-OR-MODIFIERS."
   (flet ((list-difference (list1 list2)
            (dolist (list2-elt list2 list1)
              (setf list1 (delete list2-elt list1 :count 1)))))
-    (if (fset:set? strings-or-modifiers)
+    (if (typep strings-or-modifiers 'modifier-list)
         strings-or-modifiers
-        (the (values fset:wb-set &optional)
+        (the (values modifier-list &optional)
              (fset:convert 'fset:set
                            (let* ((mods (mapcar #'modspec->modifier strings-or-modifiers))
                                   (no-dups-mods (delete-duplicates mods :test #'modifier=)))
@@ -118,8 +123,8 @@ specify a key-code binding."
                       modifiers
                       (status :pressed))
   "Return new `key'.
-Modifiers can be either a `modifier' type or a string that will be looked up in
-`*modifier-list*'."
+Modifiers can be either a list of `modifier' types or of strings that will be
+looked up in `*modifier-list*'."
   (unless (or explicit-code explicit-value)
     (error 'make-key-required-arg))
   (%make-key
@@ -129,7 +134,7 @@ Modifiers can be either a `modifier' type or a string that will be looked up in
    status))
 
 (declaim (ftype (function (key &key (:code integer) (:value string)
-                               (:modifiers fset:wb-set) (:status keyword))
+                               (:modifiers modifier-list) (:status keyword))
                           key)
                 copy-key))
 (defun copy-key (key &key (code (key-code key)) (value (key-value key))
@@ -246,7 +251,7 @@ Parents are ordered by priority, the first parent has highest priority.")
    (modifiers :accessor modifiers
               :initarg :modifiers
               :initform (fset:convert 'fset:set  *modifier-list*)
-              :type fset:wb-set
+              :type modifier-list
               :documentation "
 Accepted modifiers for this `keymap'."))
   (:documentation "A map of `key' bindings to values.
