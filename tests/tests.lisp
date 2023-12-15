@@ -46,7 +46,16 @@
                    (nkeymaps:make-key :value "a" :modifiers '("C" "M")))
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "a" :modifiers '("control"))
-                   (nkeymaps:make-key :value "a" :modifiers '("C"))))
+                   (nkeymaps:make-key :value "a" :modifiers '("C")))
+  (assert-false (nkeymaps:key=
+                 (nkeymaps:make-key :code 17)
+                 (nkeymaps:make-key :code 18)))
+  (assert-false (nkeymaps:key=
+                 (nkeymaps:make-key :code 17 :value "")
+                 (nkeymaps:make-key :code 18 :value "")))
+  (assert-equality #'nkeymaps:key=
+                   (nkeymaps:make-key :code 17 :value "dummy-1")
+                   (nkeymaps:make-key :code 17 :value "dummy-2")))
 
 (define-test make-key-with-duplicate-modifiers ()
   "Make key with duplicate modifiers (trigger warning)."
