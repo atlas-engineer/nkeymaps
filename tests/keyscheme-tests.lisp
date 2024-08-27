@@ -120,27 +120,37 @@
 (define-test imported-keyscheme-map ()
   "Define scheme with custom modifiers."
   (let* ((imported-map (nkeymaps:define-keyscheme-map "imported" ()
-                         nkeymaps:default (list
-                                           "M-c" 'hit-me
-                                           "C-c" 'hit-me-again)))
+                         nkeymaps:default (list "C-a" 'tmp
+                                                "C-o" 'persist
+                                                "M-c" 'hit-me
+                                                "C-c" 'hit-me-again)))
          (new-map (nkeymaps:define-keyscheme-map "imported" `(:import ,imported-map)
-                    nkeymaps:default (list
-                                      "M-a" 'back
-                                      "C-c" 'hit-me-differently))))
+                    nkeymaps:default (list "C-a" nil
+                                           "M-n" 'new
+                                           "M-r" 'hit-me
+                                           "C-c" 'hit-me-differently)))
+         (imported-keymap (nkeymaps:get-keymap nkeymaps:default imported-map))
+         (new-keymap (nkeymaps:get-keymap nkeymaps:default new-map)))
 
-    (let ((new-keymap (nkeymaps:get-keymap nkeymaps:default new-map))
-          (imported-keymap (nkeymaps:get-keymap nkeymaps:default imported-map)))
-      (assert-eql 'hit-me (nkeymaps:lookup-key "M-c" new-keymap))
-      (assert-eql 'hit-me-differently (nkeymaps:lookup-key "C-c" new-keymap))
-      (assert-eql 'back (nkeymaps:lookup-key "M-a" new-keymap))
+    (assert-eql 'tmp (nkeymaps:lookup-key "C-a" imported-keymap))
+    (assert-false (nkeymaps:lookup-key "C-a" new-keymap))
 
-      (assert-eql 'hit-me (nkeymaps:lookup-key "M-c" imported-keymap))
-      (assert-eql 'hit-me-again (nkeymaps:lookup-key "C-c" imported-keymap))
-      (assert-false (nkeymaps:lookup-key "M-a" imported-keymap))
+    (assert-false (nkeymaps:lookup-key "M-n" imported-keymap))
+    (assert-eql 'new (nkeymaps:lookup-key "M-n" new-keymap))
 
-      (nkeymaps:define-key imported-keymap "M-c" 'do-not-forward-me)
-      (assert-eql 'do-not-forward-me (nkeymaps:lookup-key "M-c" imported-keymap))
-      (assert-eql 'hit-me (nkeymaps:lookup-key "M-c" new-keymap)))))
+    (assert-eql 'persist (nkeymaps:lookup-key "C-o" imported-keymap))
+    (assert-eql 'persist (nkeymaps:lookup-key "C-o" new-keymap))
+
+    (assert-eql 'hit-me-again (nkeymaps:lookup-key "C-c" imported-keymap))
+    (assert-eql 'hit-me-differently (nkeymaps:lookup-key "C-c" new-keymap))
+
+    (assert-eql 'hit-me (nkeymaps:lookup-key "M-c" imported-keymap))
+    (assert-eql 'hit-me (nkeymaps:lookup-key "M-c" new-keymap))
+    (assert-eql 'hit-me (nkeymaps:lookup-key "M-r" new-keymap))
+
+    (nkeymaps:define-key imported-keymap "M-c" 'do-not-forward-me)
+    (assert-eql 'do-not-forward-me (nkeymaps:lookup-key "M-c" imported-keymap))
+    (assert-eql 'hit-me (nkeymaps:lookup-key "M-c" new-keymap))))
 
 (define-test define-keyscheme-type-catching ()
   "Catch bad keyspecs."
