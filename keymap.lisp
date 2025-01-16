@@ -274,7 +274,7 @@ The bindings from the parents are inherited, with the children having precedence
                       :name name
                       :parents parents)))
 (defun keymap-p (object)
-  "Return non-nil of OBJECT is a `keymap'."
+  "Return non-nil if OBJECT is a `keymap'."
   (typep object 'keymap))
 
 (defun copy-keymap (keymap)
