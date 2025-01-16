@@ -86,10 +86,10 @@
                    (nkeymaps:make-key :value "-" :modifiers '("C" "M"))
                    (nkeymaps/core::keyspec->key "C-M--"))
   (assert-equality #'nkeymaps:key=
-                   (nkeymaps:make-key :value "#" :modifiers '("C"))
+                   (nkeymaps:make-key :value "3" :modifiers '("C" "s"))
                    (nkeymaps/core::keyspec->key "C-#"))
   (assert-equality #'nkeymaps:key=
-                   (nkeymaps:make-key :value "#")
+                   (nkeymaps:make-key :value "3" :modifiers '("s"))
                    (nkeymaps/core::keyspec->key "#"))
   (assert-equality #'nkeymaps:key=
                    (nkeymaps:make-key :value "-")
@@ -193,24 +193,29 @@
 (define-test translator ()
   "Translator."
   (let ((keymap (empty-keymap)))
-    (nkeymaps:define-key keymap "A b" 'foo)
+    (nkeymaps:define-key keymap "shift-1" 'foo)
     (assert-eql 'foo
-                (nkeymaps:lookup-key "shift-a shift-B" keymap))
-    (nkeymaps:define-key keymap "c" 'bar)
-    (assert-eql 'bar
-                (nkeymaps:lookup-key "shift-c" keymap))
-    (nkeymaps:define-key keymap "C-x c" 'baz)
-    (assert-eql 'baz
-                (nkeymaps:lookup-key "C-x C-c" keymap))
-    (nkeymaps:define-key keymap "C-c F" 'qux)
-    (assert-eql 'qux
-                (nkeymaps:lookup-key "C-shift-c C-shift-F" keymap))
-    (nkeymaps:define-key keymap "1" 'quux)
-    (assert-eql 'quux
                 (nkeymaps:lookup-key "shift-1" keymap))
-    (nkeymaps:define-key keymap "return" 'ret)
-    (assert-eql 'ret
-                (nkeymaps:lookup-key "shift-return" keymap))))
+    (assert-eql 'foo
+                (nkeymaps:lookup-key "!" keymap))
+    (assert-eql 'foo
+                (nkeymaps:lookup-key "shift-!" keymap)))
+  (let ((keymap (empty-keymap)))
+    (nkeymaps:define-key keymap "!" 'bar)
+    (assert-eql 'bar
+                (nkeymaps:lookup-key "shift-1" keymap))
+    (assert-eql 'bar
+                (nkeymaps:lookup-key "!" keymap))
+    (assert-eql 'bar
+                (nkeymaps:lookup-key "shift-!" keymap)))
+  (let ((keymap (empty-keymap)))
+    (nkeymaps:define-key keymap "shift-!" 'baz)
+    (assert-eql 'baz
+                (nkeymaps:lookup-key "shift-1" keymap))
+    (assert-eql 'baz
+                (nkeymaps:lookup-key "!" keymap))
+    (assert-eql 'baz
+                (nkeymaps:lookup-key "shift-!" keymap))))
 
 (define-test translator-priority ()
   "Translator: Ensure other keymaps have priority over translations."
@@ -415,21 +420,21 @@
     (nkeymaps:define-key keymap1 "F" 'bar-f)
     (nkeymaps:define-key keymap2 "D" 'bar-e)
     (nkeymaps:define-key keymap2 "G" 'bar-f)
-    (assert-equal (values '("E" "D")
-                          `(("E" ,keymap1)
-                            ("D" ,keymap2)))
+    (assert-equal (values '("s-e" "s-d")
+                          `(("s-e" ,keymap1)
+                            ("s-d" ,keymap2)))
                   (nkeymaps:binding-keys 'bar-e (list keymap1 keymap2)))
-    (assert-equal (values '("D" "E")
-                          `(("D" ,keymap2)
-                            ("E" ,keymap1)))
+    (assert-equal (values '("s-d" "s-e")
+                          `(("s-d" ,keymap2)
+                            ("s-e" ,keymap1)))
                   (nkeymaps:binding-keys 'bar-e (list keymap2 keymap1)))
-    (assert-equal (values '("F" "G")
-                          `(("F" ,keymap1)
-                            ("G" ,keymap2)))
+    (assert-equal (values '("s-f" "s-g")
+                          `(("s-f" ,keymap1)
+                            ("s-g" ,keymap2)))
                   (nkeymaps:binding-keys 'bar-f (list keymap1 keymap2)))
-    (assert-equal (values '("G" "F")
-                          `(("G" ,keymap2)
-                            ("F" ,keymap1)))
+    (assert-equal (values '("s-g" "s-f")
+                          `(("s-g" ,keymap2)
+                            ("s-f" ,keymap1)))
                   (nkeymaps:binding-keys 'bar-f (list keymap2 keymap1)))
 
     ;; Inheritance:
@@ -474,12 +479,12 @@
 (define-test retrieve-translated-key ()
   "retrieve translated key."
   (let* ((keymap (empty-keymap)))
-    (nkeymaps:define-key keymap "a" 'foo-a)
+    (nkeymaps:define-key keymap "A" 'foo-a)
     (multiple-value-bind (hit km key)
         (nkeymaps:lookup-key "s-A" keymap)
       (assert-eql 'foo-a hit)
       (assert-eql keymap km)
-      (assert-equal "a" (nkeymaps:keys->keyspecs key)))))
+      (assert-equal "s-a" (nkeymaps:keys->keyspecs key)))))
 
 (define-test do-not-shadow-prefix-keymap ()
   "Don't shadow a prefix keymap."
