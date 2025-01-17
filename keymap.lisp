@@ -160,7 +160,7 @@ key values because `fset:equal?' folds case."
 (declaim (ftype (function (string &optional boolean) (or key null)) keyspec->key))
 (defun keyspec->key (string &optional error-p)
   "Parse STRING and return a new `key'.
-STRING must be passed is one of two forms:
+STRING must be passed in one of two forms:
 
   MODIFIERS-#<code>
   MODIFIERS-<value>
