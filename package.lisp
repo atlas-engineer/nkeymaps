@@ -83,12 +83,9 @@ See `nkeymaps:define-modifier'."))
 (uiop:define-package :nkeymaps/translator
   (:use :common-lisp :nkeymaps/core :nkeymaps/modifier)
   (:export
-   #:translate-remove-shift-toggle-case
-   #:translate-remove-shift
-   #:translate-remove-but-first-control
-   #:translate-remove-shift-but-first-control
-   #:translate-remove-shift-but-first-control-toggle-case
-   #:translate-shift-control-combinations)
+   #:normalize-shift-modifier-state
+   #:shift
+   #:unshift)
   (:documentation "Package holding the list of predefined translators.
 We use a dedicated package so that modifiers can easily be listed and completed.
 See `nkeymaps:*translator*'."))

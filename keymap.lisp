@@ -196,7 +196,13 @@ Note that '-' or '#' as a last character is supported, e.g. 'control--' and
           (setf code (or (parse-integer code-or-value :start 1 :junk-allowed t)
                          code))
           (setf value code-or-value))
-      (make-key :code code :value value :modifiers modifiers))))
+      (let ((unshifted-value (nkeymaps/translator:unshift value)))
+        (make-key :code code
+                  :value (or unshifted-value value)
+                  :modifiers (if unshifted-value
+                                 ;; Duplicates are not an issue.
+                                 (pushnew "shift" modifiers :test #'string=)
+                                 modifiers))))))
 
 (declaim (ftype (function (string &optional boolean) (list-of key)) keyspecs->keys))
 (defun keyspecs->keys (spec &optional error-p)
