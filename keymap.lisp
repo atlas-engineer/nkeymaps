@@ -3,8 +3,6 @@
 
 (in-package :nkeymaps/core)
 
-;; TODO: Add timeout support, e.g. "jk" in less than 0.1s could be ESC in VI-style.
-
 (defstruct modifier
   (string "" :type string)
   (shortcut "" :type string))
