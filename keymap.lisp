@@ -57,8 +57,6 @@ filters out the modifier in its `modifiers' slot."
   "List of modifiers are sets: they are ordered and have no duplicates."
   `fset:wb-set)
 
-;; Must be a structure so that it can served as a key in a hash-table with
-;; #'equalp tests.
 (defstruct (key (:constructor %make-key (code value modifiers status))
                 (:copier %copy-key))
   "The fundamental type to represent any input, be it keyboard, mouse or others."
@@ -423,18 +421,12 @@ VISITED is used to detect cycles."
     (if (legal-modifiers-p (first keys) keymap)
         (let ((hit (fset:@ (entries keymap) (first keys))))
           (when hit
-            (cond
-              ((and (keymap-p hit)
-                    (rest keys))
-               (lookup-key* hit (rest keys) visited))
-              ((and (not (keymap-p hit))
-                    (rest keys))
-               ;; Found a binding instead of a prefix keymap, skip it since it
-               ;; should be shadowed.
-               ;; Example: we loop up "C-x C-f" which is meant to be bound to
-               ;; 'open-file, but "C-x" is bound to 'cut in a parent keymap.
-               nil)
-              (t hit))))
+            (cond ((and (keymap-p hit) (rest keys))
+                   (lookup-key* hit (rest keys) visited))
+                  ;; Skip when a binding is found instead of a prefix keymap.
+                  ((and (not (keymap-p hit)) (rest keys))
+                   nil)
+                  (t hit))))
         (error 'bad-modifier
                :message (format nil "Keymap ~a only accepts modifiers ~a, got ~a"
                                 keymap
